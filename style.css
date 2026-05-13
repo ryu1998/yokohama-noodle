@@ -161,11 +161,11 @@ main {
 .modal {
 	position: fixed;
 	inset: 0;
-	z-index: 10;
-	padding: 16px;
+	z-index: 100;
+	padding: 76px 16px 16px;
 	background: rgba(0, 0, 0, 0.55);
 	display: flex;
-	align-items: flex-end;
+	align-items: flex-start;
 	justify-content: center;
 }
 
@@ -177,23 +177,25 @@ main {
 	position: relative;
 	width: 100%;
 	max-width: 720px;
-	max-height: 88vh;
+	max-height: calc(100vh - 96px);
 	overflow-y: auto;
 	padding: 20px;
-	border-radius: 20px 20px 0 0;
+	border-radius: 20px;
 	background: white;
 }
 
 .close-button {
-	position: absolute;
-	top: 12px;
-	right: 12px;
+	position: sticky;
+	top: 0;
+	margin-left: auto;
+	display: block;
 	width: 32px;
 	height: 32px;
 	border: none;
 	border-radius: 50%;
 	background: #eee;
 	font-size: 20px;
+	z-index: 2;
 }
 
 .visit-form {

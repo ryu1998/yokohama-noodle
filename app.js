@@ -407,6 +407,12 @@ visitForm.addEventListener("submit", async (event) => {
 		const updatedShop = shops.find((s) => s.id === selectedShopId);
 		renderVisitHistory(updatedShop);
 
+		if (updatedShop.status === "visited") {
+			visitForm.classList.add("hidden");
+		} else {
+			visitForm.classList.remove("hidden");
+		}
+
 		alert("登録しました");
 	} catch (error) {
 		console.error(error);
