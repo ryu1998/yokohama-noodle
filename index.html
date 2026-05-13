@@ -8,8 +8,18 @@
 </head>
 <body>
 	<header class="app-header">
-		<h1>横浜ラーメンマップ</h1>
-		<p>ピンを押すとお店を確認できます</p>
+		<div class="header-inner">
+			<div class="header-title">
+				<h1>横浜ラーメンマップ</h1>
+				<p>ピンを押すとお店を確認できます</p>
+			</div>
+
+			<button id="menuButton" class="menu-button" aria-label="メニューを開く">
+				<span></span>
+				<span></span>
+				<span></span>
+			</button>
+		</div>
 	</header>
 
 	<main>
@@ -37,7 +47,9 @@
 			<form id="visitForm" class="visit-form">
 			<label>
 				名前
-				<input type="text" id="visitorName" required placeholder="例：りゅうのすけ" />
+				<select id="visitorName" required>
+					<option value="">メンバーを選択</option>
+				</select>
 			</label>
 
 			<label>
@@ -52,6 +64,43 @@
 
 			<button type="submit">行った記録を登録</button>
 			</form>
+		</div>
+	</div>
+
+	<div id="menuModal" class="menu-modal hidden">
+		<div class="menu-content">
+			<button id="closeMenu" class="close-button">×</button>
+			<h2>メニュー</h2>
+
+			<button id="openMemberModal" class="menu-item-button">メンバー追加</button>
+			<button id="openRecordModal" class="menu-item-button">記録</button>
+		</div>
+	</div>
+
+	<div id="memberModal" class="modal hidden">
+		<div class="modal-content">
+			<button id="closeMemberModal" class="close-button">×</button>
+			<h2>メンバー追加</h2>
+
+			<form id="memberForm" class="visit-form">
+				<label>
+					メンバー名
+					<input type="text" id="memberName" required placeholder="例：りゅうのすけ" />
+				</label>
+
+				<button type="submit">追加</button>
+			</form>
+
+			<div id="memberList" class="member-list"></div>
+		</div>
+	</div>
+
+	<div id="recordModal" class="modal hidden">
+		<div class="modal-content">
+			<button id="closeRecordModal" class="close-button">×</button>
+			<h2>記録</h2>
+
+			<div id="rankingList" class="ranking-list"></div>
 		</div>
 	</div>
 

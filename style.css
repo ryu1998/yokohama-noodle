@@ -10,20 +10,28 @@ body {
 }
 
 .app-header {
-	padding: 16px;
-	background: #ee8e21;
+	position: sticky;
+	top: 0;
+	z-index: 30;
+	padding: 14px 16px 18px;
+	background: linear-gradient(135deg, #ff9800, #e65100);
 	color: white;
 	text-align: center;
+	box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
 }
 
 .app-header h1 {
 	margin: 0;
 	font-size: 22px;
+	letter-spacing: 0.04em;
+	font-weight: 800;
+	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
 }
 
 .app-header p {
-	margin: 6px 0 0;
-	font-size: 13px;
+	margin: 0;
+	font-size: 12px;
+	opacity: 0.92;
 }
 
 main {
@@ -277,4 +285,172 @@ main {
 	font-size: 13px;
 	background: #eeeeee;
 	color: #555;
+}
+
+.header-inner {
+	position: relative;
+	max-width: 720px;
+	margin: 0 auto;
+	min-height: 52px;
+	display: grid;
+	place-items: center;
+}
+
+.header-title {
+	display: grid;
+	gap: 4px;
+}
+
+.menu-button {
+	position: absolute;
+	top: 50%;
+	right: 0;
+	transform: translateY(-50%);
+	width: 44px;
+	height: 44px;
+	border: 1px solid rgba(255, 255, 255, 0.35);
+	border-radius: 16px;
+	background: rgba(255, 255, 255, 0.18);
+	backdrop-filter: blur(8px);
+	display: grid;
+	place-content: center;
+	gap: 5px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+	cursor: pointer;
+}
+
+.menu-button span {
+	display: block;
+	width: 22px;
+	height: 3px;
+	border-radius: 999px;
+	background: white;
+	transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.menu-button:active {
+	transform: translateY(-50%) scale(0.96);
+}
+
+.menu-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	background: rgba(0, 0, 0, 0.45);
+	display: flex;
+	justify-content: flex-end;
+}
+
+.menu-modal.hidden {
+	display: none;
+}
+
+.menu-content {
+	position: relative;
+	width: 82%;
+	max-width: 340px;
+	height: 100%;
+	padding: 28px 18px;
+	background: linear-gradient(180deg, #ffffff, #fff8f0);
+	box-shadow: -8px 0 24px rgba(0, 0, 0, 0.22);
+	border-radius: 24px 0 0 24px;
+}
+
+.menu-content h2 {
+	margin: 0 0 20px;
+	font-size: 22px;
+	color: #333;
+}
+
+.menu-item-button {
+	width: 100%;
+	margin-top: 12px;
+	padding: 16px 14px;
+	border: 1px solid #ffe0b2;
+	border-radius: 16px;
+	background: white;
+	font-size: 16px;
+	font-weight: 800;
+	text-align: left;
+	color: #333;
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+	cursor: pointer;
+}
+
+.menu-item-button::before {
+	margin-right: 8px;
+}
+
+#openMemberModal::before {
+	content: "👥";
+}
+
+#openRecordModal::before {
+	content: "🏆";
+}
+
+.menu-item-button:active {
+	transform: scale(0.98);
+	background: #fff3e0;
+}
+
+.visit-form select {
+	width: 100%;
+	padding: 10px;
+	border: 1px solid #ccc;
+	border-radius: 10px;
+	font-size: 16px;
+	background: white;
+}
+
+.shop-card-meta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.visit-info {
+	font-size: 12px;
+	color: #666;
+	text-align: right;
+}
+
+.visit-status.visited {
+	background: #ffe0b2;
+	color: #bf360c;
+}
+
+.member-list,
+.ranking-list {
+	display: grid;
+	gap: 10px;
+	margin-top: 16px;
+}
+
+.member-item,
+.ranking-item {
+	padding: 12px;
+	border-radius: 12px;
+	background: #fafafa;
+}
+
+.ranking-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.ranking-rank {
+	font-weight: bold;
+}
+
+.ranking-count {
+	font-weight: bold;
+	color: #d84315;
+}
+
+.hidden {
+	display: none !important;
 }
