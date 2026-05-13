@@ -249,3 +249,32 @@ main {
 	font-size: 12px;
 	color: #777;
 }
+
+.area-group {
+	display: grid;
+	gap: 10px;
+}
+
+.area-title {
+	margin: 14px 0 0;
+	padding: 6px 10px;
+	border-left: 6px solid #eecf21;
+	font-size: 17px;
+	background: #f1dda7;
+	border-radius: 8px;
+}
+
+.badge.unvisited {
+	background: #eeeeee;
+	color: #555;
+}
+
+.visit-status {
+	display: inline-block;
+	margin-top: 12px;
+	padding: 6px 10px;
+	border-radius: 999px;
+	font-size: 13px;
+	background: #eeeeee;
+	color: #555;
+}

@@ -50,6 +50,7 @@ async function loadShops() {
 	const { data, error } = await supabaseClient
 		.from(TABLE_NAME)
 		.select("*")
+		.order("area", { ascending: true })
 		.order("created_at", { ascending: true });
 
 	if (error) {
@@ -93,37 +94,63 @@ function renderPins() {
 function renderShopList() {
 	shopList.innerHTML = "";
 
-	shops.forEach((shop) => {
-		const card = document.createElement("div");
-		card.className = "shop-card";
+	const groupedShops = shops.reduce((groups, shop) => {
+		const area = shop.area || "未分類";
 
-		if (shop.status === "visited") {
-			card.classList.add("visited");
+		if (!groups[area]) {
+			groups[area] = [];
 		}
 
-		if (shop.id === selectedShopId) {
-			card.classList.add("selected");
-		}
+		groups[area].push(shop);
+		return groups;
+	}, {});
 
-		card.innerHTML = `
-			<h3>${escapeHtml(shop.shop_name)}</h3>
-			<span class="badge ${shop.status === "visited" ? "visited" : ""}">
-			${shop.status === "visited" ? "訪問済み" : "未訪問"}
-			</span>
-		`;
+	Object.entries(groupedShops).forEach(([area, areaShops]) => {
+		const areaGroup = document.createElement("div");
+		areaGroup.className = "area-group";
 
-		card.addEventListener("click", () => {
-			selectShop(shop.id);
-			openShopModal(shop.id);
+		const areaTitle = document.createElement("h3");
+		areaTitle.className = "area-title";
+		areaTitle.textContent = area;
+
+		areaGroup.appendChild(areaTitle);
+
+		areaShops.forEach((shop) => {
+			const card = document.createElement("div");
+			card.className = "shop-card";
+
+			const isVisited = shop.status === "visited";
+
+			if (isVisited) {
+				card.classList.add("visited");
+			}
+
+			if (shop.id === selectedShopId) {
+				card.classList.add("selected");
+			}
+
+			card.innerHTML = `
+				<h3>${escapeHtml(shop.shop_name)}</h3>
+				<span class="badge ${isVisited ? "visited" : "unvisited"}">
+					${isVisited ? "訪問済み" : "未訪問"}
+				</span>
+			`;
+
+			card.addEventListener("click", () => {
+				selectShop(shop.id);
+				openShopModal(shop.id);
+			});
+
+			areaGroup.appendChild(card);
 		});
 
-		shopList.appendChild(card);
+		shopList.appendChild(areaGroup);
 	});
 }
 
 function renderVisitHistory(shop) {
 	if (shop.status !== "visited") {
-		visitHistory.innerHTML = `<p>まだ行っていません。</p>`;
+		visitHistory.innerHTML = `<span class="visit-status">未訪問</span>`;
 		return;
 	}
 
@@ -237,9 +264,8 @@ visitForm.addEventListener("submit", async (event) => {
 });
 
 async function uploadPhoto(shopId, visitorName, file) {
-	const fileExt = file.name.split(".").pop();
-	const safeName = visitorName.replace(/[^\w\-ぁ-んァ-ン一-龥]/g, "");
-	const fileName = `${shopId}/${Date.now()}-${safeName}.${fileExt}`;
+	const fileExt = file.name.split(".").pop().toLowerCase();
+	const fileName = `${shopId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
 
 	const { error } = await supabaseClient.storage
 		.from(STORAGE_BUCKET)
