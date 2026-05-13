@@ -1,0 +1,251 @@
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	background: #f7f3ee;
+	color: #222;
+}
+
+.app-header {
+	padding: 16px;
+	background: #ee8e21;
+	color: white;
+	text-align: center;
+}
+
+.app-header h1 {
+	margin: 0;
+	font-size: 22px;
+}
+
+.app-header p {
+	margin: 6px 0 0;
+	font-size: 13px;
+}
+
+main {
+	padding: 12px;
+}
+
+.map-section {
+	margin-bottom: 20px;
+}
+
+.map-wrapper {
+	position: relative;
+	width: 100%;
+	max-width: 720px;
+	margin: 0 auto;
+	border-radius: 16px;
+	overflow: hidden;
+	background: #ddd;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
+}
+
+.map-image {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+#pinLayer {
+	position: absolute;
+	inset: 0;
+}
+
+.pin {
+	position: absolute;
+	width: 28px;
+	height: 28px;
+	border: 3px solid white;
+	border-radius: 50%;
+	transform: translate(-50%, -100%);
+	cursor: pointer;
+	box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.pin::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: -9px;
+	width: 12px;
+	height: 12px;
+	background: inherit;
+	transform: translateX(-50%) rotate(45deg);
+	border-right: 3px solid white;
+	border-bottom: 3px solid white;
+}
+
+.pin.unvisited {
+	background: #777;
+}
+
+.pin.visited {
+	background: #ff9800;
+}
+
+.pin.selected {
+	outline: 4px solid #2196f3;
+}
+
+.shop-section {
+	max-width: 720px;
+	margin: 0 auto;
+}
+
+.shop-section h2 {
+	font-size: 18px;
+	margin: 0 0 10px;
+}
+
+.shop-list {
+	display: grid;
+	gap: 10px;
+}
+
+.shop-card {
+	padding: 14px;
+	border-radius: 14px;
+	background: white;
+	border: 2px solid transparent;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+	cursor: pointer;
+}
+
+.shop-card.selected {
+	border-color: #2196f3;
+	background: #e3f2fd;
+}
+
+.shop-card.visited {
+	border-left: 8px solid #ff9800;
+}
+
+.shop-card h3 {
+	margin: 0 0 4px;
+	font-size: 16px;
+}
+
+.shop-card p {
+	margin: 0;
+	font-size: 13px;
+	color: #555;
+}
+
+.badge {
+	display: inline-block;
+	margin-top: 8px;
+	padding: 3px 8px;
+	border-radius: 999px;
+	font-size: 12px;
+	background: #eee;
+}
+
+.badge.visited {
+	background: #ffe0b2;
+	color: #bf360c;
+}
+
+.modal {
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+	padding: 16px;
+	background: rgba(0, 0, 0, 0.55);
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+}
+
+.modal.hidden {
+	display: none;
+}
+
+.modal-content {
+	position: relative;
+	width: 100%;
+	max-width: 720px;
+	max-height: 88vh;
+	overflow-y: auto;
+	padding: 20px;
+	border-radius: 20px 20px 0 0;
+	background: white;
+}
+
+.close-button {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	width: 32px;
+	height: 32px;
+	border: none;
+	border-radius: 50%;
+	background: #eee;
+	font-size: 20px;
+}
+
+.visit-form {
+	display: grid;
+	gap: 12px;
+	margin-top: 16px;
+}
+
+.visit-form label {
+	display: grid;
+	gap: 6px;
+	font-size: 14px;
+}
+
+.visit-form input,
+.visit-form textarea {
+	width: 100%;
+	padding: 10px;
+	border: 1px solid #ccc;
+	border-radius: 10px;
+	font-size: 16px;
+}
+
+.visit-form textarea {
+	min-height: 80px;
+}
+
+.visit-form button {
+	padding: 12px;
+	border: none;
+	border-radius: 12px;
+	background: #d84315;
+	color: white;
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.visit-history {
+	display: grid;
+	gap: 12px;
+	margin-top: 12px;
+}
+
+.visit-item {
+	padding: 10px;
+	border-radius: 12px;
+	background: #fafafa;
+}
+
+.visit-item img {
+	width: 100%;
+	border-radius: 12px;
+	margin-top: 8px;
+}
+
+.visit-item-name {
+	font-weight: bold;
+}
+
+.visit-item-date {
+	font-size: 12px;
+	color: #777;
+}

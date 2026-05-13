@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>横浜ラーメンマップ</title>
+	<link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+	<header class="app-header">
+		<h1>横浜ラーメンマップ</h1>
+		<p>ピンを押すとお店を確認できます</p>
+	</header>
+
+	<main>
+		<section class="map-section">
+			<div class="map-wrapper" id="mapWrapper">
+			<img src="./assets/yokohama-map.png" alt="横浜駅周辺マップ" class="map-image" />
+			<div id="pinLayer"></div>
+			</div>
+		</section>
+
+		<section class="shop-section">
+			<h2>ラーメン屋リスト</h2>
+			<div id="shopList" class="shop-list"></div>
+		</section>
+	</main>
+
+	<div id="modal" class="modal hidden">
+		<div class="modal-content">
+			<button id="closeModal" class="close-button">×</button>
+
+			<h2 id="modalShopName"></h2>
+
+			<div id="visitHistory" class="visit-history"></div>
+
+			<form id="visitForm" class="visit-form">
+			<label>
+				名前
+				<input type="text" id="visitorName" required placeholder="例：りゅうのすけ" />
+			</label>
+
+			<label>
+				コメント
+				<textarea id="comment" placeholder="例：家系で一番好き"></textarea>
+			</label>
+
+			<label>
+				ラーメン写真
+				<input type="file" id="photoInput" accept="image/*" required />
+			</label>
+
+			<button type="submit">行った記録を登録</button>
+			</form>
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="./app.js"></script>
+</body>
+</html>
