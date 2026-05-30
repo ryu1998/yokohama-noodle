@@ -313,8 +313,8 @@ main {
 .menu-button {
 	position: absolute;
 	top: 50%;
-	left: 16px;
-	transform: translateY(-50%);
+	left: 50%;
+	transform: translate(-340px, -50%);
 	width: 44px;
 	height: 44px;
 	border: 1px solid rgba(255, 255, 255, 0.35);
@@ -331,9 +331,8 @@ main {
 .header-status {
 	position: absolute;
 	top: 50%;
-	right: 16px;
-	transform: translateY(-50%);
-	min-width: 150px;
+	right: 50%;
+	transform: translate(340px, -50%);
 	height: 44px;
 	display: flex;
 	align-items: center;
@@ -598,4 +597,16 @@ main {
 
 .hidden {
 	display: none !important;
+}
+
+@media (max-width: 720px) {
+	.menu-button {
+		left: 16px;
+		transform: translateY(-50%);
+	}
+
+	.header-status {
+		right: 16px;
+		transform: translateY(-50%);
+	}
 }
