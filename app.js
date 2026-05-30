@@ -97,7 +97,7 @@ async function loadShops() {
 		.from(TABLE_NAME)
 		.select(`
 			*,
-			area:areas!shops_area_id_fkey (
+			area:areas (
 				id,
 				name
 			)
