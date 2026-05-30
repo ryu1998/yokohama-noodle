@@ -123,7 +123,6 @@ function renderPins() {
 
 		pin.addEventListener("click", () => {
 			selectShop(shop.id);
-			openShopModal(shop.id);
 		});
 
 		pinLayer.appendChild(pin);
