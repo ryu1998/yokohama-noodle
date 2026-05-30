@@ -312,11 +312,20 @@ main {
 .header-status {
 	position: absolute;
 	top: 50%;
-transform: translateY(-50%);
-	right: 12px;
-font-size: 14px;
-font-weight: 700;
-color: rgba(255, 255, 255, 0.95);
+	right: 16px;
+	transform: translateY(-50%);
+	width: 88px;
+	min-height: 44px;
+	display: grid;
+	place-items: center;
+	padding: 6px 8px;
+	border-radius: 16px;
+	background: rgba(255, 255, 255, 0.18);
+	backdrop-filter: blur(8px);
+	font-size: 13px;
+	font-weight: 700;
+	color: rgba(255, 255, 255, 0.95);
+	text-align: center;
 }
 
 .admin-field {

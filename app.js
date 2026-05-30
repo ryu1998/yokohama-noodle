@@ -96,7 +96,13 @@ async function init() {
 async function loadShops() {
 	const { data, error } = await supabaseClient
 		.from(TABLE_NAME)
-		.select("*")
+		.select(`
+			*,
+			areas (
+				id,
+				name
+			)
+		`)
 		.order("area_id", { ascending: true })
 		.order("created_at", { ascending: true });
 
@@ -178,29 +184,32 @@ function renderPins() {
 function renderShopList() {
 	shopList.innerHTML = "";
 
-	// グルーピングは noodle_records の area カラム優先、なければ area_id から取得
 	const groupedShops = shops.reduce((groups, shop) => {
-		const areaName = shop.area ?? areaMap[shop.area_id]?.name ?? "未分類";
+		const areaId = shop.area_id ?? "unclassified";
+		const areaName = shop.areas?.name || areaMap[shop.area_id]?.name || "未分類";
 
-		if (!groups[areaName]) {
-			groups[areaName] = [];
+		if (!groups[areaId]) {
+			groups[areaId] = {
+				name: areaName,
+				shops: []
+			};
 		}
 
-		groups[areaName].push(shop);
+		groups[areaId].shops.push(shop);
 		return groups;
 	}, {});
 
-	Object.entries(groupedShops).forEach(([area, areaShops]) => {
+	Object.values(groupedShops).forEach((group) => {
 		const areaGroup = document.createElement("div");
 		areaGroup.className = "area-group";
 
 		const areaTitle = document.createElement("h3");
 		areaTitle.className = "area-title";
-		areaTitle.textContent = area;
+		areaTitle.textContent = group.name;
 
 		areaGroup.appendChild(areaTitle);
 
-		areaShops.forEach((shop) => {
+		group.shops.forEach((shop) => {
 			const card = document.createElement("div");
 			card.className = "shop-card";
 
@@ -551,6 +560,12 @@ mapWrapper.addEventListener("click", async (event) => {
 		adminUpdateStatus.textContent = "座標を更新しました";
 		adminUpdateStatus.className = "admin-status success";
 		adminCopyStatus.textContent = "クリップボードにコピーしました";
+
+		// 管理者モーダルを再表示してプルダウンにフォーカス
+		adminModal.classList.remove("hidden");
+		try {
+			adminShopSelect?.focus();
+		} catch (e) {}
 
 		setTimeout(() => {
 			adminCopyStatus.textContent = "";
