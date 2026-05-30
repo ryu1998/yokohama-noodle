@@ -310,37 +310,44 @@ main {
 	padding: 0 96px;
 }
 
-.menu-button,
+.menu-button {
+	position: absolute;
+	top: 50%;
+	left: 16px;
+	transform: translateY(-50%);
+	width: 44px;
+	height: 44px;
+	border: 1px solid rgba(255, 255, 255, 0.35);
+	border-radius: 16px;
+	background: rgba(255, 255, 255, 0.18);
+	backdrop-filter: blur(8px);
+	display: grid;
+	place-content: center;
+	gap: 5px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+	cursor: pointer;
+}
+
 .header-status {
 	position: absolute;
 	top: 50%;
+	right: 16px;
 	transform: translateY(-50%);
-	width: 88px;
-	min-height: 44px;
+	min-width: 150px;
+	height: 44px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 14px;
 	border-radius: 16px;
 	background: rgba(255, 255, 255, 0.18);
 	backdrop-filter: blur(8px);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
-}
-
-.header-status {
-	right: 16px;
-	display: grid;
-	place-items: center;
-	padding: 6px 8px;
 	font-size: 13px;
 	font-weight: 700;
 	color: rgba(255, 255, 255, 0.95);
 	text-align: center;
-}
-
-.menu-button {
-	left: 16px;
-	border: 1px solid rgba(255, 255, 255, 0.35);
-	display: grid;
-	place-content: center;
-	gap: 5px;
-	cursor: pointer;
+	white-space: nowrap;
 }
 
 .admin-field {

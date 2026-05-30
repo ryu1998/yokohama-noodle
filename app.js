@@ -113,6 +113,8 @@ async function loadShops() {
 	}
 
 	shops = data || [];
+
+	console.log(shops[0]);
 }
 
 async function loadMembers() {
@@ -268,7 +270,7 @@ function renderCompletionStatus() {
 	const visitedShops = shops.filter((shop) => shop.status === "visited").length;
 	const percent = totalShops === 0 ? 0 : Math.round((visitedShops / totalShops) * 100);
 
-	completionStatus.textContent = `訪問済 ${visitedShops}/${totalShops} 店舗（${percent}%）`;
+	completionStatus.textContent = `訪問済： ${visitedShops}/${totalShops} 店舗（${percent}%）`;
 }
 
 function renderAdminShopSelect() {
