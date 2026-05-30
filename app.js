@@ -109,6 +109,13 @@ async function loadShops() {
 	shops = rawShops.map((shop) => {
 		const area = areaMap[shop.area_id];
 
+		console.log({
+			shop_name: shop.shop_name,
+			shop_area_id: shop.area_id,
+			areaMap,
+			area
+		});
+
 		return {
 			...shop,
 			area_name: area?.name || "未分類"
