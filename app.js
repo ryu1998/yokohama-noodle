@@ -86,6 +86,8 @@ async function init() {
 			String(area.id) === String(shop.area_id)
 		);
 
+		console.log(area);
+
 		return {
 			...shop,
 			area_name: area?.name || "未分類"
@@ -270,7 +272,7 @@ function renderCompletionStatus() {
 	const visitedShops = shops.filter((shop) => shop.status === "visited").length;
 	const percent = totalShops === 0 ? 0 : Math.round((visitedShops / totalShops) * 100);
 
-	completionStatus.textContent = `訪問済： ${visitedShops}/${totalShops} 店舗（${percent}%）`;
+	completionStatus.textContent = `訪問済：\n${visitedShops}/${totalShops} 店舗\n（${percent}%）`;
 }
 
 function renderAdminShopSelect() {
