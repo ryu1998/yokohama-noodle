@@ -96,9 +96,15 @@ async function init() {
 async function loadShops() {
 	const { data, error } = await supabaseClient
 		.from(TABLE_NAME)
-		.select("*")
+		.select(`
+			*,
+			areas (
+				id,
+				name
+			)
+		`)
 		.order("area_id", { ascending: true })
-		.order("created_at", { ascending: true });
+		.order("shop_name", { ascending: true });
 
 	if (error) {
 		console.error(error);
