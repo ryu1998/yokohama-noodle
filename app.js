@@ -75,11 +75,9 @@ let isCoordinateMode = false;
 init();
 
 async function init() {
-	await Promise.all([
-		loadAreas(),
-		loadShops(),
-		loadMembers()
-	]);
+	await loadAreas();
+	await loadMembers();
+	await loadShops();
 
 	renderPins();
 	renderShopList();
@@ -116,8 +114,6 @@ async function loadShops() {
 			area_name: area?.name || "未分類"
 		};
 	});
-	console.log("エリアデータ:", areas);
-	console.log("取得した店舗データ:", shops);
 }
 
 async function loadMembers() {
