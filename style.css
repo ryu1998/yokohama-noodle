@@ -340,7 +340,7 @@ main {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 0 14px;
+	padding: 0;
 	border: none;
 	background: none;
 	backdrop-filter: none;
@@ -607,12 +607,12 @@ main {
 
 @media (max-width: 720px) {
 	.menu-button {
-		left: 16px;
+		left: 14px;
 		transform: translateY(-50%);
 	}
 
 	.header-status {
-		right: 16px;
+		right: 12px;
 		transform: translateY(-50%);
 	}
 }
