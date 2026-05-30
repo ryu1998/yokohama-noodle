@@ -417,6 +417,38 @@ main {
 	background: white;
 }
 
+.member-status-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.member-status-select {
+	flex: 1;
+	max-width: 220px;
+}
+
+.member-status-update-button {
+	padding: 10px 14px;
+	border: none;
+	border-radius: 10px;
+	background: #d84315;
+	color: white;
+	font-size: 14px;
+	font-weight: 700;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.member-status-update-button:hover {
+	opacity: 0.9;
+}
+
+.member-status-update-button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
 .menu-button span {
 	display: block;
 	width: 22px;

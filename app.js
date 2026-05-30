@@ -378,12 +378,23 @@ function renderMemberList() {
 			return `
 				<div class="member-item">
 					<div class="member-item-name">${escapeHtml(member.name)}</div>
-					<select class="member-status-select" data-member-id="${member.id}">
-						<option value="余裕" ${status === "余裕" ? "selected" : ""}>😋 余裕</option>
-						<option value="普通" ${status === "普通" ? "selected" : ""}>🙂 普通</option>
-						<option value="腹八分目" ${status === "腹八分目" ? "selected" : ""}>😐 腹八分目</option>
-						<option value="限界" ${status === "限界" ? "selected" : ""}>🤢 限界</option>
-					</select>
+
+					<div class="member-status-row">
+						<select class="member-status-select" data-member-id="${member.id}">
+							<option value="余裕" ${status === "余裕" ? "selected" : ""}>😋 余裕</option>
+							<option value="普通" ${status === "普通" ? "selected" : ""}>🙂 普通</option>
+							<option value="腹八分目" ${status === "腹八分目" ? "selected" : ""}>😐 腹八分目</option>
+							<option value="限界" ${status === "限界" ? "selected" : ""}>🤢 限界</option>
+						</select>
+
+						<button
+							type="button"
+							class="member-status-update-button"
+							data-member-id="${member.id}"
+						>
+							更新
+						</button>
+					</div>
 				</div>
 			`;
 		})
@@ -489,15 +500,6 @@ closeRecordModal.addEventListener("click", () => {
 	recordModal.classList.add("hidden");
 });
 
-memberList.addEventListener("change", async (event) => {
-	const select = event.target.closest(".member-status-select");
-	if (!select) return;
-
-	const memberId = select.dataset.memberId;
-	const status = select.value;
-	await updateMemberStatus(memberId, status);
-});
-
 openAdminModal.addEventListener("click", () => {
 	menuModal.classList.add("hidden");
 	renderAdminShopSelect();
@@ -518,6 +520,36 @@ toggleCoordinateModeButton.addEventListener("click", () => {
 		: "座標取得モード：OFF";
 
 	mapWrapper.classList.toggle("coordinate-mode", isCoordinateMode);
+});
+
+memberList.addEventListener("click", async (event) => {
+	const button = event.target.closest(".member-status-update-button");
+	if (!button) return;
+
+	const memberId = button.dataset.memberId;
+	const select = memberList.querySelector(
+		`.member-status-select[data-member-id="${memberId}"]`
+	);
+
+	if (!select) return;
+
+	const status = select.value;
+
+	button.disabled = true;
+	button.textContent = "更新中...";
+
+	try {
+		await updateMemberStatus(memberId, status);
+		button.textContent = "更新済み";
+	} catch (error) {
+		console.error(error);
+		button.textContent = "失敗";
+	}
+
+	setTimeout(() => {
+		button.disabled = false;
+		button.textContent = "更新";
+	}, 1000);
 });
 
 mapWrapper.addEventListener("click", async (event) => {
