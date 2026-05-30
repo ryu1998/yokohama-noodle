@@ -74,10 +74,18 @@ let isCoordinateMode = false;
 
 init();
 
+// グローバルエラーをキャッチしてコンソールに出力
+window.addEventListener('error', (e) => {
+	console.error('Uncaught error:', e.error || e.message, e);
+});
+
 async function init() {
 	await loadAreas();
+	console.log('areas loaded:', areas.length, areaMap);
 	await loadMembers();
+	console.log('members loaded:', members.length, Object.keys(memberMap).length);
 	await loadShops();
+	console.log('shops loaded:', shops.length);
 
 	renderPins();
 	renderShopList();
