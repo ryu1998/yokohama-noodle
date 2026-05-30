@@ -77,6 +77,7 @@ init();
 async function init() {
 	await Promise.all([
 		loadShops(),
+		loadAreas(),
 		loadMembers()
 	]);
 
@@ -95,13 +96,7 @@ async function init() {
 async function loadShops() {
 	const { data, error } = await supabaseClient
 		.from(TABLE_NAME)
-		.select(`
-			*,
-			area:areas (
-				id,
-				name
-			)
-		`)
+		.select("*")
 		.order("area_id", { ascending: true })
 		.order("shop_name", { ascending: true });
 
@@ -112,8 +107,6 @@ async function loadShops() {
 	}
 
 	shops = data || [];
-
-	console.log(shops[0]);
 }
 
 async function loadMembers() {
@@ -190,7 +183,7 @@ function renderShopList() {
 		const area = areas.find((area) =>
 			String(area.id) === String(shop.area_id)
 		);
-		const areaName = shop.area?.name || "未分類";
+		const areaName = area?.name || "未分類";
 
 		if (!groups[areaId]) {
 			groups[areaId] = {
