@@ -5,12 +5,16 @@
 const SUPABASE_URL = "https://fdkyhobujjssahrdnvxj.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZka3lob2J1ampzc2FocmRudnhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2Nzk2NTksImV4cCI6MjA5NDI1NTY1OX0.puO3ciHMGe_B140npC_WM5p3ilDiS9adzE0eZIUYJ3Y";
 
-const TABLE_NAME = "noodle_records";
+const TABLE_NAME = "shops";
 const MEMBER_TABLE_NAME = "members";
 const AREA_TABLE_NAME = "areas";
 const STORAGE_BUCKET = "noodle-photos";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let areas = [];
+let areaMap = {};
+let memberMap = {};
 
 // ==============================
 // DOM
@@ -58,6 +62,7 @@ init();
 async function init() {
 	await Promise.all([
 		loadShops(),
+		loadAreas(),
 		loadMembers()
 	]);
 
@@ -74,7 +79,7 @@ async function init() {
 async function loadShops() {
 	const { data, error } = await supabaseClient
 		.from(TABLE_NAME)
-		.select(`*, area:${AREA_TABLE_NAME}(name), visitor:${MEMBER_TABLE_NAME}(name)`)
+		.select("*")
 		.order("area_id", { ascending: true })
 		.order("created_at", { ascending: true });
 
@@ -100,6 +105,29 @@ async function loadMembers() {
 	}
 
 	members = data || [];
+	memberMap = members.reduce((map, member) => {
+		map[member.id] = member;
+		return map;
+	}, {});
+}
+
+async function loadAreas() {
+	const { data, error } = await supabaseClient
+		.from(AREA_TABLE_NAME)
+		.select("*")
+		.order("id", { ascending: true });
+
+	if (error) {
+		console.error(error);
+		alert("エリアデータの取得に失敗しました");
+		return;
+	}
+
+	areas = data || [];
+	areaMap = areas.reduce((map, area) => {
+		map[area.id] = area;
+		return map;
+	}, {});
 }
 
 // ==============================
@@ -134,7 +162,7 @@ function renderShopList() {
 	shopList.innerHTML = "";
 
 	const groupedShops = shops.reduce((groups, shop) => {
-		const area = shop.area?.name || "未分類";
+		const area = areaMap[shop.area_id]?.name || "未分類";
 
 		if (!groups[area]) {
 			groups[area] = [];
@@ -159,7 +187,7 @@ function renderShopList() {
 			card.className = "shop-card";
 
 			const isVisited = shop.status === "visited";
-			const visitorName = shop.visitor?.name || shop.visitor_name || "";
+			const visitorName = memberMap[shop.visitor_id]?.name || shop.visitor_name || "";
 
 			if (isVisited) {
 				card.classList.add("visited");
@@ -211,7 +239,7 @@ function renderVisitHistory(shop) {
 		? new Date(shop.created_at).toLocaleString("ja-JP")
 		: "";
 
-	const visitorName = shop.visitor?.name || shop.visitor_name || "";
+	const visitorName = memberMap[shop.visitor_id]?.name || shop.visitor_name || "";
 
 	visitHistory.innerHTML = `
 		<span class="visit-status visited">訪問済み</span>
@@ -256,10 +284,10 @@ function renderMemberList() {
 }
 
 function renderRanking() {
-	const visitedShops = shops.filter((shop) => shop.status === "visited" && (shop.visitor?.name || shop.visitor_name));
+	const visitedShops = shops.filter((shop) => shop.status === "visited" && (memberMap[shop.visitor_id]?.name || shop.visitor_name));
 
 	const rankingMap = visitedShops.reduce((map, shop) => {
-		const name = shop.visitor?.name || shop.visitor_name;
+		const name = memberMap[shop.visitor_id]?.name || shop.visitor_name;
 		map[name] = (map[name] || 0) + 1;
 		return map;
 	}, {});
