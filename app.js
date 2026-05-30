@@ -178,14 +178,15 @@ function renderPins() {
 function renderShopList() {
 	shopList.innerHTML = "";
 
+	// グルーピングは noodle_records の area カラム優先、なければ area_id から取得
 	const groupedShops = shops.reduce((groups, shop) => {
-		const area = areaMap[shop.area_id]?.name || "未分類";
+		const areaName = shop.area ?? areaMap[shop.area_id]?.name ?? "未分類";
 
-		if (!groups[area]) {
-			groups[area] = [];
+		if (!groups[areaName]) {
+			groups[areaName] = [];
 		}
 
-		groups[area].push(shop);
+		groups[areaName].push(shop);
 		return groups;
 	}, {});
 
@@ -326,14 +327,12 @@ function renderVisitHistory(shop) {
 function renderMemberSelect() {
 	visitorNameInput.innerHTML = `<option value="">メンバーを選択</option>`;
 
-	members
-		.filter((member) => member.status !== "inactive")
-		.forEach((member) => {
-			const option = document.createElement("option");
-			option.value = member.id;
-			option.textContent = member.name;
-			visitorNameInput.appendChild(option);
-		});
+	members.forEach((member) => {
+		const option = document.createElement("option");
+		option.value = member.id;
+		option.textContent = member.name;
+		visitorNameInput.appendChild(option);
+	});
 }
 
 function renderMemberList() {
@@ -344,13 +343,21 @@ function renderMemberList() {
 
 	memberList.innerHTML = members
 		.map((member) => {
-			const status = member.status || "active";
+			const status = member.status || "普通";
+			const icons = {
+				"余裕": "😋",
+				"普通": "🙂",
+				"腹八分目": "😐",
+				"限界": "🤢"
+			};
 			return `
 				<div class="member-item">
 					<div class="member-item-name">${escapeHtml(member.name)}</div>
 					<select class="member-status-select" data-member-id="${member.id}">
-						<option value="active" ${status === "active" ? "selected" : ""}>アクティブ</option>
-						<option value="inactive" ${status === "inactive" ? "selected" : ""}>非アクティブ</option>
+						<option value="余裕" ${status === "余裕" ? "selected" : ""}>😋 余裕</option>
+						<option value="普通" ${status === "普通" ? "selected" : ""}>🙂 普通</option>
+						<option value="腹八分目" ${status === "腹八分目" ? "selected" : ""}>😐 腹八分目</option>
+						<option value="限界" ${status === "限界" ? "selected" : ""}>🤢 限界</option>
 					</select>
 				</div>
 			`;
@@ -658,7 +665,8 @@ memberForm.addEventListener("submit", async (event) => {
 		const { error } = await supabaseClient
 			.from(MEMBER_TABLE_NAME)
 			.insert({
-				name
+				name,
+				status: '普通'
 			});
 
 		if (error) throw error;
@@ -680,6 +688,11 @@ async function updateMemberStatus(memberId, status) {
 	if (!memberId) return;
 
 	try {
+		const allowed = ["余裕", "普通", "腹八分目", "限界"];
+		if (!allowed.includes(status)) {
+			alert("不正なステータスです");
+			return;
+		}
 		const { error } = await supabaseClient
 			.from(MEMBER_TABLE_NAME)
 			.update({ status })
