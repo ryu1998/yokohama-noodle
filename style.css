@@ -310,23 +310,37 @@ main {
 	padding: 0 96px;
 }
 
+.menu-button,
 .header-status {
 	position: absolute;
 	top: 50%;
-	right: 16px;
 	transform: translateY(-50%);
 	width: 88px;
 	min-height: 44px;
-	display: grid;
-	place-items: center;
-	padding: 6px 8px;
 	border-radius: 16px;
 	background: rgba(255, 255, 255, 0.18);
 	backdrop-filter: blur(8px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+}
+
+.header-status {
+	right: 16px;
+	display: grid;
+	place-items: center;
+	padding: 6px 8px;
 	font-size: 13px;
 	font-weight: 700;
 	color: rgba(255, 255, 255, 0.95);
 	text-align: center;
+}
+
+.menu-button {
+	left: 16px;
+	border: 1px solid rgba(255, 255, 255, 0.35);
+	display: grid;
+	place-content: center;
+	gap: 5px;
+	cursor: pointer;
 }
 
 .admin-field {
@@ -395,24 +409,6 @@ main {
 	background: white;
 }
 
-.menu-button {
-	position: absolute;
-	top: 50%;
-	left: 16px;
-	transform: translateY(-50%);
-	width: 44px;
-	height: 44px;
-	border: 1px solid rgba(255, 255, 255, 0.35);
-	border-radius: 16px;
-	background: rgba(255, 255, 255, 0.18);
-	backdrop-filter: blur(8px);
-	display: grid;
-	place-content: center;
-	gap: 5px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
-	cursor: pointer;
-}
-
 .menu-button span {
 	display: block;
 	width: 22px;
@@ -432,7 +428,7 @@ main {
 	z-index: 20;
 	background: rgba(0, 0, 0, 0.45);
 	display: flex;
-	justify-content: flex-end;
+	justify-content: flex-start;
 }
 
 .menu-modal.hidden {
@@ -446,8 +442,8 @@ main {
 	height: 100%;
 	padding: 28px 18px;
 	background: linear-gradient(180deg, #ffffff, #fff8f0);
-	box-shadow: -8px 0 24px rgba(0, 0, 0, 0.22);
-	border-radius: 24px 0 0 24px;
+	box-shadow: 8px 0 24px rgba(0, 0, 0, 0.22);
+	border-radius: 0 24px 24px 0;
 }
 
 .menu-content h2 {
