@@ -397,6 +397,54 @@ main {
 	content: "🏆";
 }
 
+#openAdminModal::before {
+	content: "🛠";
+}
+
+.admin-panel {
+	display: grid;
+	gap: 12px;
+	margin-top: 16px;
+}
+
+#toggleCoordinateMode {
+	padding: 12px;
+	border: none;
+	border-radius: 12px;
+	background: #d84315;
+	color: white;
+	font-size: 16px;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+.admin-help {
+	margin: 0;
+	font-size: 13px;
+	color: #666;
+	line-height: 1.6;
+}
+
+.admin-coordinate-box {
+	display: grid;
+	gap: 8px;
+	padding: 12px;
+	border-radius: 12px;
+	background: #fafafa;
+	font-size: 14px;
+}
+
+#adminCopyStatus {
+	font-size: 12px;
+	color: #2e7d32;
+}
+
+.map-wrapper.coordinate-mode {
+	cursor: crosshair;
+	outline: 3px solid #2196f3;
+	outline-offset: 3px;
+}
+
 .menu-item-button:active {
 	transform: scale(0.98);
 	background: #fff3e0;

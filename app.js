@@ -49,9 +49,20 @@ const recordModal = document.getElementById("recordModal");
 const closeRecordModal = document.getElementById("closeRecordModal");
 const rankingList = document.getElementById("rankingList");
 
+const mapWrapper = document.getElementById("mapWrapper");
+
+const openAdminModal = document.getElementById("openAdminModal");
+const adminModal = document.getElementById("adminModal");
+const closeAdminModal = document.getElementById("closeAdminModal");
+const toggleCoordinateModeButton = document.getElementById("toggleCoordinateMode");
+const adminLastCoordinate = document.getElementById("adminLastCoordinate");
+const adminSqlCoordinate = document.getElementById("adminSqlCoordinate");
+const adminCopyStatus = document.getElementById("adminCopyStatus");
+
 let shops = [];
 let selectedShopId = null;
 let members = [];
+let isCoordinateMode = false;
 
 // ==============================
 // 初期化
@@ -380,6 +391,63 @@ openRecordModal.addEventListener("click", () => {
 
 closeRecordModal.addEventListener("click", () => {
 	recordModal.classList.add("hidden");
+});
+
+openAdminModal.addEventListener("click", () => {
+	menuModal.classList.add("hidden");
+	adminModal.classList.remove("hidden");
+});
+
+closeAdminModal.addEventListener("click", () => {
+	adminModal.classList.add("hidden");
+});
+
+toggleCoordinateModeButton.addEventListener("click", () => {
+	isCoordinateMode = !isCoordinateMode;
+
+	toggleCoordinateModeButton.textContent = isCoordinateMode
+		? "座標取得モード：ON"
+		: "座標取得モード：OFF";
+
+	mapWrapper.classList.toggle("coordinate-mode", isCoordinateMode);
+});
+
+mapWrapper.addEventListener("click", async (event) => {
+	if (!isCoordinateMode) {
+		return;
+	}
+
+	if (event.target.closest(".pin")) {
+		return;
+	}
+
+	const rect = mapWrapper.getBoundingClientRect();
+
+	const x = ((event.clientX - rect.left) / rect.width) * 100;
+	const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+	const roundedX = Number(x.toFixed(1));
+	const roundedY = Number(y.toFixed(1));
+
+	adminLastCoordinate.textContent = `座標：x=${roundedX}, y=${roundedY}`;
+	adminSqlCoordinate.textContent = `SQL：${roundedX}, ${roundedY}`;
+
+	console.log("地図クリック座標:", {
+		x: roundedX,
+		y: roundedY
+	});
+
+	try {
+		await navigator.clipboard.writeText(`${roundedX}, ${roundedY}`);
+		adminCopyStatus.textContent = "クリップボードにコピーしました";
+
+		setTimeout(() => {
+			adminCopyStatus.textContent = "";
+		}, 1600);
+	} catch (error) {
+		console.warn("クリップボードへのコピーに失敗しました", error);
+		adminCopyStatus.textContent = "コピーに失敗しました";
+	}
 });
 
 closeModal.addEventListener("click", closeShopModal);
