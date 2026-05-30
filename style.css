@@ -52,12 +52,12 @@ main {
 	position: relative;
 	width: 100%;
 	max-width: 720px;
-	max-height: 42dvh;
 	margin: 0 auto;
 	border-radius: 16px;
 	overflow: hidden;
 	background: #ddd;
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
+	aspect-ratio: 1056 / 720;
 }
 
 .map-image {
