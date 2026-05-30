@@ -35,11 +35,15 @@ body {
 }
 
 main {
+	display: flex;
 	padding: 12px;
+	gap: 12px;
+	height: calc(100dvh - 90px);
 }
 
 .map-section {
-	margin-bottom: 20px;
+	flex-shrink: 0;
+	width: 50%;
 }
 
 .map-wrapper {
@@ -101,13 +105,9 @@ main {
 }
 
 .shop-section {
-	max-width: 720px;
-	margin: 0 auto;
-}
-
-.shop-section h2 {
-	font-size: 18px;
-	margin: 0 0 10px;
+	flex: 1;
+	overflow-y: auto;
+	padding-right: 4px;
 }
 
 .shop-list {
