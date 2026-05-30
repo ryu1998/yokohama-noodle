@@ -81,6 +81,17 @@ async function init() {
 		loadMembers()
 	]);
 
+	shops = shops.map((shop) => {
+		const area = areas.find((area) =>
+			String(area.id) === String(shop.area_id)
+		);
+
+		return {
+			...shop,
+			area_name: area?.name || "未分類"
+		};
+	});
+
 	renderPins();
 	renderShopList();
 	renderCompletionStatus();
@@ -180,10 +191,7 @@ function renderShopList() {
 
 	const groupedShops = shops.reduce((groups, shop) => {
 		const areaId = shop.area_id ?? "unclassified";
-		const area = areas.find((area) =>
-			String(area.id) === String(shop.area_id)
-		);
-		const areaName = area?.name || "未分類";
+		const areaName = shop.area_name || "未分類";
 
 		if (!groups[areaId]) {
 			groups[areaId] = {
