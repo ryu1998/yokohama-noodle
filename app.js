@@ -98,13 +98,13 @@ async function loadShops() {
 		.from(TABLE_NAME)
 		.select(`
 			*,
-			areas (
+			area:areas!shops_area_id_fkey (
 				id,
 				name
 			)
 		`)
 		.order("area_id", { ascending: true })
-		.order("shop_name", { ascending: true });
+		.order("created_at", { ascending: true });
 
 	if (error) {
 		console.error(error);
@@ -191,7 +191,7 @@ function renderShopList() {
 		const area = areas.find((area) =>
 			String(area.id) === String(shop.area_id)
 		);
-		const areaName = area?.name || "未分類";
+		const areaName = shop.area?.name || "未分類";
 
 		if (!groups[areaId]) {
 			groups[areaId] = {
