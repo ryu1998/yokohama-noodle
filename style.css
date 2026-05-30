@@ -602,7 +602,7 @@ main {
 	white-space: pre-wrap;
 }
 
-@media (max-width: 720px) {
+/*@media (max-width: 720px) {
 	.menu-button {
 		left: 16px;
 		transform: translateY(-50%);
@@ -612,4 +612,4 @@ main {
 		right: 16px;
 		transform: translateY(-50%);
 	}
-}
+}*/
