@@ -333,7 +333,7 @@ main {
 	top: 50%;
 	right: 50%;
 	transform: translate(340px, -50%);
-	height: 44px;
+	height: auto;
 	display: flex;
 	align-items: center;
 	justify-content: center;

@@ -111,11 +111,14 @@ async function loadShops() {
 	shops = rawShops.map((shop) => {
 		const area = areaMap[shop.area_id];
 
+		console.log(area);
+
 		return {
 			...shop,
 			area_name: area?.name || "未分類"
 		};
 	});
+	console.log("取得した店舗データ:", shops);
 }
 
 async function loadMembers() {
