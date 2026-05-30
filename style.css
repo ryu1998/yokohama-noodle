@@ -426,14 +426,14 @@ main {
 	transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-.menu-button:active {
+/*.menu-button:active {
 	transform: translateY(-50%) scale(0.96);
-}
+}*/
 
 .menu-modal {
 	position: fixed;
 	inset: 0;
-	z-index: 20;
+	z-index: 3000;
 	background: rgba(0, 0, 0, 0.45);
 	display: flex;
 	justify-content: flex-start;

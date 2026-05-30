@@ -113,7 +113,6 @@ async function loadShops() {
 	}
 
 	const rawShops = data || [];
-	console.log('rawShops count:', rawShops.length, rawShops.slice(0,5));
 
 	shops = rawShops.map((shop) => {
 		const area = areaMap[String(shop.area_id)];
@@ -163,13 +162,11 @@ async function loadAreas() {
 		return;
 	}
 
-	console.log('loadAreas response:', { data, error });
 	areas = data || [];
 	areaMap = areas.reduce((map, area) => {
 		map[String(area.id)] = area;
 		return map;
 	}, {});
-	console.log('areaMap built:', Object.keys(areaMap));
 }
 
 // ==============================
