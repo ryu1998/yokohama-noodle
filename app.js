@@ -107,7 +107,7 @@ async function loadShops() {
 	const rawShops = data || [];
 
 	shops = rawShops.map((shop) => {
-		const area = areaMap[shop.area_id];
+		const area = areaMap[String(shop.area_id)];
 
 		console.log({
 			shop_name: shop.shop_name,
@@ -137,7 +137,7 @@ async function loadMembers() {
 
 	members = data || [];
 	memberMap = members.reduce((map, member) => {
-		map[member.id] = member;
+		map[String(member.id)] = member;
 		return map;
 	}, {});
 }
@@ -156,7 +156,7 @@ async function loadAreas() {
 
 	areas = data || [];
 	areaMap = areas.reduce((map, area) => {
-		map[area.id] = area;
+		map[String(area.id)] = area;
 		return map;
 	}, {});
 }
@@ -222,7 +222,7 @@ function renderShopList() {
 			card.className = "shop-card";
 
 			const isVisited = shop.status === "visited";
-			const visitorName = memberMap[shop.visitor_id]?.name || shop.visitor_name || "";
+			const visitorName = memberMap[String(shop.visitor_id)]?.name || shop.visitor_name || "";
 
 			if (isVisited) {
 				card.classList.add("visited");
@@ -323,7 +323,7 @@ function renderVisitHistory(shop) {
 		? new Date(shop.created_at).toLocaleString("ja-JP")
 		: "";
 
-	const visitorName = memberMap[shop.visitor_id]?.name || shop.visitor_name || "";
+	const visitorName = memberMap[String(shop.visitor_id)]?.name || shop.visitor_name || "";
 
 	visitHistory.innerHTML = `
 		<span class="visit-status visited">訪問済み</span>
@@ -383,10 +383,10 @@ function renderMemberList() {
 }
 
 function renderRanking() {
-	const visitedShops = shops.filter((shop) => shop.status === "visited" && (memberMap[shop.visitor_id]?.name || shop.visitor_name));
+	const visitedShops = shops.filter((shop) => shop.status === "visited" && (memberMap[String(shop.visitor_id)]?.name || shop.visitor_name));
 
 	const rankingMap = visitedShops.reduce((map, shop) => {
-		const name = memberMap[shop.visitor_id]?.name || shop.visitor_name;
+		const name = memberMap[String(shop.visitor_id)]?.name || shop.visitor_name;
 		map[name] = (map[name] || 0) + 1;
 		return map;
 	}, {});
