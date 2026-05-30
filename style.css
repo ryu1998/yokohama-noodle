@@ -18,6 +18,7 @@ body {
 	color: white;
 	text-align: center;
 	box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+	white-space: nowrap;
 }
 
 .app-header h1 {
@@ -602,7 +603,7 @@ main {
 	white-space: pre-wrap;
 }
 
-/*@media (max-width: 720px) {
+@media (max-width: 720px) {
 	.menu-button {
 		left: 16px;
 		transform: translateY(-50%);
@@ -612,4 +613,4 @@ main {
 		right: 16px;
 		transform: translateY(-50%);
 	}
-}*/
+}
