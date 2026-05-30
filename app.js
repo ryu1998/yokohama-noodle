@@ -77,7 +77,6 @@ init();
 async function init() {
 	await Promise.all([
 		loadShops(),
-		loadAreas(),
 		loadMembers()
 	]);
 
@@ -104,7 +103,7 @@ async function loadShops() {
 			)
 		`)
 		.order("area_id", { ascending: true })
-		.order("created_at", { ascending: true });
+		.order("shop_name", { ascending: true });
 
 	if (error) {
 		console.error(error);
