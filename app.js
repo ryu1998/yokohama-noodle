@@ -186,7 +186,10 @@ function renderShopList() {
 
 	const groupedShops = shops.reduce((groups, shop) => {
 		const areaId = shop.area_id ?? "unclassified";
-		const areaName = shop.areas?.name || areaMap[shop.area_id]?.name || "未分類";
+		const area = areas.find((area) =>
+			String(area.id) === String(shop.area_id)
+		);
+		const areaName = area?.name || "未分類";
 
 		if (!groups[areaId]) {
 			groups[areaId] = {

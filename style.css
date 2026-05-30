@@ -307,6 +307,7 @@ main {
 .header-title {
 	display: grid;
 	gap: 4px;
+	padding: 0 96px;
 }
 
 .header-status {
