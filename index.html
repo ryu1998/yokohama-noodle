@@ -114,17 +114,25 @@
 <h2>管理者用</h2>
 
 <div class="admin-panel">
+<label class="admin-field">
+<span>座標を更新する店舗</span>
+<select id="adminShopSelect">
+<option value="">店舗を選択</option>
+</select>
+</label>
+
 <button id="toggleCoordinateMode" type="button">
 座標取得モード：OFF
 </button>
 
 <p class="admin-help">
-座標取得モードをONにしてから、地図上の任意の場所をクリックしてください。
+店舗を選択し、座標取得モードをONにしてから、地図上の任意の場所をクリックしてください。
 </p>
 
 <div class="admin-coordinate-box">
 <div id="adminLastCoordinate">座標：未取得</div>
 <div id="adminSqlCoordinate">SQL：未取得</div>
+<div id="adminUpdateStatus"></div>
 <div id="adminCopyStatus"></div>
 </div>
 </div>

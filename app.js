@@ -56,9 +56,11 @@ const mapWrapper = document.getElementById("mapWrapper");
 const openAdminModal = document.getElementById("openAdminModal");
 const adminModal = document.getElementById("adminModal");
 const closeAdminModal = document.getElementById("closeAdminModal");
+const adminShopSelect = document.getElementById("adminShopSelect");
 const toggleCoordinateModeButton = document.getElementById("toggleCoordinateMode");
 const adminLastCoordinate = document.getElementById("adminLastCoordinate");
 const adminSqlCoordinate = document.getElementById("adminSqlCoordinate");
+const adminUpdateStatus = document.getElementById("adminUpdateStatus");
 const adminCopyStatus = document.getElementById("adminCopyStatus");
 
 let shops = [];
@@ -84,6 +86,7 @@ async function init() {
 	renderCompletionStatus();
 	renderMemberSelect();
 	renderMemberList();
+	renderAdminShopSelect();
 }
 
 // ==============================
@@ -156,7 +159,7 @@ function renderPins() {
 
 		pin.className = `pin ${shop.status === "visited" ? "visited" : "unvisited"}`;
 
-		if (shop.id === selectedShopId) {
+		if (String(shop.id) === String(selectedShopId)) {
 			pin.classList.add("selected");
 		}
 
@@ -207,7 +210,7 @@ function renderShopList() {
 				card.classList.add("visited");
 			}
 
-			if (shop.id === selectedShopId) {
+			if (String(shop.id) === String(selectedShopId)) {
 				card.classList.add("selected");
 			}
 
@@ -253,6 +256,43 @@ function renderCompletionStatus() {
 	const percent = totalShops === 0 ? 0 : Math.round((visitedShops / totalShops) * 100);
 
 	completionStatus.textContent = `訪問済 ${visitedShops}/${totalShops} 店舗（${percent}%）`;
+}
+
+function renderAdminShopSelect() {
+	if (!adminShopSelect) return;
+
+	const currentValue = adminShopSelect.value;
+	adminShopSelect.innerHTML = `<option value="">店舗を選択</option>`;
+
+	shops.forEach((shop) => {
+		const option = document.createElement("option");
+		option.value = shop.id;
+
+		const x = shop.x ?? "-";
+		const y = shop.y ?? "-";
+		option.textContent = `${shop.shop_name}（現在: ${x}, ${y}）`;
+
+		adminShopSelect.appendChild(option);
+	});
+
+	if (currentValue && shops.some((shop) => String(shop.id) === String(currentValue))) {
+		adminShopSelect.value = currentValue;
+	}
+}
+
+async function updateShopCoordinate(shopId, x, y) {
+	const { error } = await supabaseClient
+		.from(TABLE_NAME)
+		.update({ x, y })
+		.eq("id", shopId);
+
+	if (error) throw error;
+
+	shops = shops.map((shop) =>
+		String(shop.id) === String(shopId)
+			? { ...shop, x, y }
+			: shop
+	);
 }
 
 function renderVisitHistory(shop) {
@@ -428,6 +468,9 @@ memberList.addEventListener("change", async (event) => {
 
 openAdminModal.addEventListener("click", () => {
 	menuModal.classList.add("hidden");
+	renderAdminShopSelect();
+	adminUpdateStatus.textContent = "";
+	adminUpdateStatus.className = "admin-status";
 	adminModal.classList.remove("hidden");
 });
 
@@ -454,6 +497,13 @@ mapWrapper.addEventListener("click", async (event) => {
 		return;
 	}
 
+	const selectedAdminShopId = adminShopSelect?.value;
+	if (!selectedAdminShopId) {
+		adminUpdateStatus.textContent = "店舗を選択してください";
+		adminUpdateStatus.className = "admin-status error";
+		return;
+	}
+
 	const rect = mapWrapper.getBoundingClientRect();
 
 	const x = ((event.clientX - rect.left) / rect.width) * 100;
@@ -464,22 +514,44 @@ mapWrapper.addEventListener("click", async (event) => {
 
 	adminLastCoordinate.textContent = `座標：x=${roundedX}, y=${roundedY}`;
 	adminSqlCoordinate.textContent = `SQL：${roundedX}, ${roundedY}`;
+	adminUpdateStatus.textContent = "座標を更新中...";
+	adminUpdateStatus.className = "admin-status";
 
 	console.log("地図クリック座標:", {
+		shopId: selectedAdminShopId,
 		x: roundedX,
 		y: roundedY
 	});
 
 	try {
+		await updateShopCoordinate(selectedAdminShopId, roundedX, roundedY);
+
+		selectedShopId = String(selectedAdminShopId);
+		renderPins();
+		renderShopList();
+		renderAdminShopSelect();
+
+		const selectedCard = document.querySelector(".shop-card.selected");
+		if (selectedCard) {
+			selectedCard.scrollIntoView({
+				behavior: "smooth",
+				block: "center"
+			});
+		}
+
 		await navigator.clipboard.writeText(`${roundedX}, ${roundedY}`);
+
+		adminUpdateStatus.textContent = "座標を更新しました";
+		adminUpdateStatus.className = "admin-status success";
 		adminCopyStatus.textContent = "クリップボードにコピーしました";
 
 		setTimeout(() => {
 			adminCopyStatus.textContent = "";
 		}, 1600);
 	} catch (error) {
-		console.warn("クリップボードへのコピーに失敗しました", error);
-		adminCopyStatus.textContent = "コピーに失敗しました";
+		console.error(error);
+		adminUpdateStatus.textContent = "座標更新に失敗しました";
+		adminUpdateStatus.className = "admin-status error";
 	}
 });
 
