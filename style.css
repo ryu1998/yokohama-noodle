@@ -599,6 +599,10 @@ main {
 	display: none !important;
 }
 
+#completionStatus {
+	white-space: pre-wrap;
+}
+
 @media (max-width: 720px) {
 	.menu-button {
 		left: 16px;

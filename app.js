@@ -81,19 +81,6 @@ async function init() {
 		loadMembers()
 	]);
 
-	shops = shops.map((shop) => {
-		const area = areas.find((area) =>
-			String(area.id) === String(shop.area_id)
-		);
-
-		console.log(area);
-
-		return {
-			...shop,
-			area_name: area?.name || "未分類"
-		};
-	});
-
 	renderPins();
 	renderShopList();
 	renderCompletionStatus();
@@ -119,7 +106,16 @@ async function loadShops() {
 		return;
 	}
 
-	shops = data || [];
+	const rawShops = data || [];
+
+	shops = rawShops.map((shop) => {
+		const area = areaMap[shop.area_id];
+
+		return {
+			...shop,
+			area_name: area?.name || "未分類"
+		};
+	});
 }
 
 async function loadMembers() {
