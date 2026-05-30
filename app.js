@@ -7,6 +7,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const TABLE_NAME = "noodle_records";
 const MEMBER_TABLE_NAME = "members";
+const AREA_TABLE_NAME = "areas";
 const STORAGE_BUCKET = "noodle-photos";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -73,8 +74,8 @@ async function init() {
 async function loadShops() {
 	const { data, error } = await supabaseClient
 		.from(TABLE_NAME)
-		.select("*")
-		.order("area", { ascending: true })
+		.select(`*, area:${AREA_TABLE_NAME}(name), visitor:${MEMBER_TABLE_NAME}(name)`)
+		.order("area_id", { ascending: true })
 		.order("created_at", { ascending: true });
 
 	if (error) {
@@ -133,7 +134,7 @@ function renderShopList() {
 	shopList.innerHTML = "";
 
 	const groupedShops = shops.reduce((groups, shop) => {
-		const area = shop.area || "未分類";
+		const area = shop.area?.name || "未分類";
 
 		if (!groups[area]) {
 			groups[area] = [];
@@ -158,6 +159,7 @@ function renderShopList() {
 			card.className = "shop-card";
 
 			const isVisited = shop.status === "visited";
+			const visitorName = shop.visitor?.name || shop.visitor_name || "";
 
 			if (isVisited) {
 				card.classList.add("visited");
@@ -168,7 +170,7 @@ function renderShopList() {
 			}
 
 			const visitInfo = isVisited
-				? `${escapeHtml(shop.visitor_name || "")} ${formatShortDate(shop.created_at)}`
+				? `${escapeHtml(visitorName)} ${formatShortDate(shop.created_at)}`
 				: "";
 
 			card.innerHTML = `
@@ -209,11 +211,13 @@ function renderVisitHistory(shop) {
 		? new Date(shop.created_at).toLocaleString("ja-JP")
 		: "";
 
+	const visitorName = shop.visitor?.name || shop.visitor_name || "";
+
 	visitHistory.innerHTML = `
 		<span class="visit-status visited">訪問済み</span>
 
 		<div class="visit-item">
-			<div class="visit-item-name">${escapeHtml(shop.visitor_name || "")}</div>
+			<div class="visit-item-name">${escapeHtml(visitorName)}</div>
 			<div class="visit-item-date">${dateText}</div>
 			<p>${escapeHtml(shop.comment || "")}</p>
 			${
@@ -230,7 +234,7 @@ function renderMemberSelect() {
 
 	members.forEach((member) => {
 		const option = document.createElement("option");
-		option.value = member.name;
+		option.value = member.id;
 		option.textContent = member.name;
 		visitorNameInput.appendChild(option);
 	});
@@ -252,10 +256,11 @@ function renderMemberList() {
 }
 
 function renderRanking() {
-	const visitedShops = shops.filter((shop) => shop.status === "visited" && shop.visitor_name);
+	const visitedShops = shops.filter((shop) => shop.status === "visited" && (shop.visitor?.name || shop.visitor_name));
 
 	const rankingMap = visitedShops.reduce((map, shop) => {
-		map[shop.visitor_name] = (map[shop.visitor_name] || 0) + 1;
+		const name = shop.visitor?.name || shop.visitor_name;
+		map[name] = (map[name] || 0) + 1;
 		return map;
 	}, {});
 
@@ -370,33 +375,28 @@ visitForm.addEventListener("submit", async (event) => {
 
 	if (!selectedShopId) return;
 
-	const visitorName = visitorNameInput.value.trim();
+	const visitorId = visitorNameInput.value;
 	const comment = commentInput.value.trim();
 	const file = photoInput.files[0];
 
-	if (!visitorName || !file) {
+	if (!visitorId || !file) {
 		alert("名前と写真を入力してください");
 		return;
 	}
 
 	try {
-		const photoUrl = await uploadPhoto(selectedShopId, visitorName, file);
+		const photoUrl = await uploadPhoto(selectedShopId, visitorId, file);
 
 		const { error } = await supabaseClient
 			.from(TABLE_NAME)
 			.update({
-			status: "visited",
-			visitor_name: visitorName,
-			comment,
-			photo_url: photoUrl,
-			created_at: new Date().toISOString()
+				status: "visited",
+				visitor_id: visitorId,
+				comment,
+				photo_url: photoUrl,
+				created_at: new Date().toISOString()
 			})
 			.eq("id", selectedShopId);
-
-		if (error) throw error;
-
-		visitorNameInput.value = "";
-		commentInput.value = "";
 		photoInput.value = "";
 
 		await loadShops();
