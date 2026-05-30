@@ -76,8 +76,8 @@ init();
 
 async function init() {
 	await Promise.all([
-		loadShops(),
 		loadAreas(),
+		loadShops(),
 		loadMembers()
 	]);
 
