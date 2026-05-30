@@ -22,6 +22,7 @@ let memberMap = {};
 
 const pinLayer = document.getElementById("pinLayer");
 const shopList = document.getElementById("shopList");
+const completionStatus = document.getElementById("completionStatus");
 
 const modal = document.getElementById("modal");
 const closeModal = document.getElementById("closeModal");
@@ -32,6 +33,7 @@ const visitForm = document.getElementById("visitForm");
 const visitorNameInput = document.getElementById("visitorName");
 const commentInput = document.getElementById("comment");
 const photoInput = document.getElementById("photoInput");
+const visitError = document.getElementById("visitError");
 
 const menuButton = document.getElementById("menuButton");
 const menuModal = document.getElementById("menuModal");
@@ -79,6 +81,7 @@ async function init() {
 
 	renderPins();
 	renderShopList();
+	renderCompletionStatus();
 	renderMemberSelect();
 	renderMemberList();
 }
@@ -238,6 +241,18 @@ function renderShopList() {
 
 		shopList.appendChild(areaGroup);
 	});
+
+	renderCompletionStatus();
+}
+
+function renderCompletionStatus() {
+	if (!completionStatus) return;
+
+	const totalShops = shops.length;
+	const visitedShops = shops.filter((shop) => shop.status === "visited").length;
+	const percent = totalShops === 0 ? 0 : Math.round((visitedShops / totalShops) * 100);
+
+	completionStatus.textContent = `訪問済 ${visitedShops}/${totalShops} 店舗（${percent}%）`;
 }
 
 function renderVisitHistory(shop) {
@@ -271,12 +286,14 @@ function renderVisitHistory(shop) {
 function renderMemberSelect() {
 	visitorNameInput.innerHTML = `<option value="">メンバーを選択</option>`;
 
-	members.forEach((member) => {
-		const option = document.createElement("option");
-		option.value = member.id;
-		option.textContent = member.name;
-		visitorNameInput.appendChild(option);
-	});
+	members
+		.filter((member) => member.status !== "inactive")
+		.forEach((member) => {
+			const option = document.createElement("option");
+			option.value = member.id;
+			option.textContent = member.name;
+			visitorNameInput.appendChild(option);
+		});
 }
 
 function renderMemberList() {
@@ -286,11 +303,18 @@ function renderMemberList() {
 	}
 
 	memberList.innerHTML = members
-		.map((member) => `
-			<div class="member-item">
-				${escapeHtml(member.name)}
-			</div>
-		`)
+		.map((member) => {
+			const status = member.status || "active";
+			return `
+				<div class="member-item">
+					<div class="member-item-name">${escapeHtml(member.name)}</div>
+					<select class="member-status-select" data-member-id="${member.id}">
+						<option value="active" ${status === "active" ? "selected" : ""}>アクティブ</option>
+						<option value="inactive" ${status === "inactive" ? "selected" : ""}>非アクティブ</option>
+					</select>
+				</div>
+			`;
+		})
 		.join("");
 }
 
@@ -393,6 +417,15 @@ closeRecordModal.addEventListener("click", () => {
 	recordModal.classList.add("hidden");
 });
 
+memberList.addEventListener("change", async (event) => {
+	const select = event.target.closest(".member-status-select");
+	if (!select) return;
+
+	const memberId = select.dataset.memberId;
+	const status = select.value;
+	await updateMemberStatus(memberId, status);
+});
+
 openAdminModal.addEventListener("click", () => {
 	menuModal.classList.add("hidden");
 	adminModal.classList.remove("hidden");
@@ -476,9 +509,13 @@ visitForm.addEventListener("submit", async (event) => {
 	const file = photoInput.files[0];
 
 	if (!visitorId || !file) {
-		alert("名前と写真を入力してください");
+		visitError.textContent = "メンバーと写真の両方を選択してください。";
+		visitError.classList.remove("hidden");
 		return;
 	}
+
+	visitError.textContent = "";
+	visitError.classList.add("hidden");
 
 	try {
 		const photoUrl = await uploadPhoto(selectedShopId, visitorId, file);
@@ -566,6 +603,31 @@ memberForm.addEventListener("submit", async (event) => {
 		alert("メンバー追加に失敗しました。同じ名前が既にあるかもしれません。");
 	}
 });
+
+async function updateMemberStatus(memberId, status) {
+	if (!memberId) return;
+
+	try {
+		const { error } = await supabaseClient
+			.from(MEMBER_TABLE_NAME)
+			.update({ status })
+			.eq("id", memberId);
+
+		if (error) {
+			console.error(error);
+			alert("メンバーのステータス更新に失敗しました。"
+				+ "データベースにstatus列が存在するか確認してください。");
+			return;
+		}
+
+		await loadMembers();
+		renderMemberList();
+		renderMemberSelect();
+	} catch (error) {
+		console.error(error);
+		alert("メンバーのステータス更新に失敗しました。");
+	}
+}
 
 function formatShortDate(value) {
 	if (!value) return "";

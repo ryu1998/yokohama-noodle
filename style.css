@@ -309,6 +309,43 @@ main {
 	gap: 4px;
 }
 
+.header-status {
+	margin-top: 10px;
+	font-size: 14px;
+	font-weight: 700;
+	color: rgba(255, 255, 255, 0.95);
+}
+
+.form-error {
+	color: #d84315;
+	background: #fff2f0;
+	padding: 10px 12px;
+	border: 1px solid #f1a89d;
+	border-radius: 10px;
+	font-size: 14px;
+}
+
+.member-item {
+	display: grid;
+	gap: 10px;
+	padding: 12px;
+	border-radius: 12px;
+	background: #fff9e9;
+}
+
+.member-item-name {
+	font-weight: 700;
+}
+
+.member-status-select {
+	max-width: 220px;
+	padding: 10px;
+	border-radius: 10px;
+	border: 1px solid #ccc;
+	font-size: 14px;
+	background: white;
+}
+
 .menu-button {
 	position: absolute;
 	top: 50%;

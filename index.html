@@ -13,6 +13,7 @@
 <h1>横浜ラーメンマップ</h1>
 <p>ピンを押すとお店を確認できます</p>
 </div>
+<div id="completionStatus" class="header-status"></div>
 
 <button id="menuButton" class="menu-button" aria-label="メニューを開く">
 <span></span>
@@ -62,6 +63,8 @@
 <input type="file" id="photoInput" accept="image/*" required />
 </label>
 
+<div id="visitError" class="form-error hidden"></div>
+
 <button type="submit">行った記録を登録</button>
 </form>
 </div>
@@ -72,7 +75,7 @@
 <button id="closeMenu" class="close-button">×</button>
 <h2>メニュー</h2>
 
-<button id="openMemberModal" class="menu-item-button">メンバー追加</button>
+<button id="openMemberModal" class="menu-item-button">メンバー管理</button>
 <button id="openRecordModal" class="menu-item-button">記録</button>
 <button id="openAdminModal" class="menu-item-button">管理者用</button>
 </div>
@@ -81,7 +84,7 @@
 <div id="memberModal" class="modal hidden">
 <div class="modal-content">
 <button id="closeMemberModal" class="close-button">×</button>
-<h2>メンバー追加</h2>
+<h2>メンバー管理</h2>
 
 <form id="memberForm" class="visit-form">
 <label>
