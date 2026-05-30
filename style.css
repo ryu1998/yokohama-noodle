@@ -36,20 +36,23 @@ body {
 
 main {
 	display: flex;
+	flex-direction: column;
 	padding: 12px;
 	gap: 12px;
 	height: calc(100dvh - 90px);
+	overflow: hidden;
 }
 
 .map-section {
 	flex-shrink: 0;
-	width: 50%;
+	width: 100%;
 }
 
 .map-wrapper {
 	position: relative;
 	width: 100%;
 	max-width: 720px;
+	max-height: 42dvh;
 	margin: 0 auto;
 	border-radius: 16px;
 	overflow: hidden;
@@ -60,7 +63,8 @@ main {
 .map-image {
 	display: block;
 	width: 100%;
-	height: auto;
+	height: 100%;
+	object-fit: contain;
 }
 
 #pinLayer {
@@ -106,6 +110,7 @@ main {
 
 .shop-section {
 	flex: 1;
+	min-height: 0;
 	overflow-y: auto;
 	padding-right: 4px;
 }
