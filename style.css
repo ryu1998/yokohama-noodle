@@ -87,7 +87,6 @@ main {
 	transform-origin: center center;
 	pointer-events: none;
 	-webkit-user-drag: none;
-	user-drag: none;
 }
 
 #pinLayer {
