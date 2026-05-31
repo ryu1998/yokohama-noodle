@@ -963,6 +963,16 @@ main {
 	color: #555;
 }
 
+.tabelog-full-conquered {
+	background:
+		radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 35%),
+		linear-gradient(135deg, #fff3b0, #ffcc80);
+	border-left: 5px solid #d84315;
+	box-shadow:
+		0 0 10px rgba(255, 193, 7, 0.35),
+		0 0 22px rgba(216, 67, 21, 0.22);
+}
+
 @keyframes pinGlow {
 	from {
 		filter:

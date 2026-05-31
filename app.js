@@ -556,9 +556,21 @@ function renderTabelog() {
 
 	tabelogList.innerHTML = logs
 		.map((log) => {
-			if (log.log_type === "conquest") {
-				const statusText = formatStatusCounts(log.status_counts || {});
+			const statusText = formatStatusCounts(log.status_counts || {});
 
+			if (log.log_type === "full_conquest") {
+				return `
+					<div class="tabelog-item tabelog-full-conquered">
+						<div class="tabelog-date">${formatShortDate(log.logged_at)}</div>
+						<div class="tabelog-text">
+							<span class="tabelog-badge">🏆 完全制覇！</span>
+							<span>${escapeHtml(statusText)}</span>
+						</div>
+					</div>
+				`;
+			}
+
+			if (log.log_type === "area_conquest") {
 				return `
 					<div class="tabelog-item tabelog-conquered">
 						<div class="tabelog-date">${formatShortDate(log.logged_at)}</div>
@@ -969,6 +981,13 @@ visitForm.addEventListener("submit", async (event) => {
 			loggedAt
 		);
 
+		await insertFullConquestLogIfNeeded(
+			beforeShops,
+			updatedShops,
+			updatedMembers,
+			loggedAt
+		);
+
 		photoInput.value = "";
 
 		await loadShops();
@@ -1183,9 +1202,33 @@ async function insertConquestLogIfNeeded(areaId, updatedShops, updatedMembers, l
 	const { error } = await supabaseClient
 		.from(LOG_TABLE_NAME)
 		.insert({
-			log_type: "conquest",
+			log_type: "area_conquest",
 			area_id: areaId,
 			area_name: areaName,
+			status_counts: statusCounts,
+			logged_at: loggedAt
+		});
+
+	if (error && error.code !== "23505") {
+		throw error;
+	}
+}
+
+async function insertFullConquestLogIfNeeded(beforeShops, updatedShops, updatedMembers, loggedAt) {
+	const beforeComplete = isFullyConquered(beforeShops);
+	const afterComplete = isFullyConquered(updatedShops);
+
+	if (beforeComplete || !afterComplete) {
+		return;
+	}
+
+	const statusCounts = countMemberStatuses(updatedMembers);
+
+	const { error } = await supabaseClient
+		.from(LOG_TABLE_NAME)
+		.insert({
+			log_type: "full_conquest",
+			area_name: "全エリア",
 			status_counts: statusCounts,
 			logged_at: loggedAt
 		});
