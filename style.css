@@ -338,7 +338,8 @@ main {
 	transform: translate(340px, -50%);
 	height: auto;
 	display: flex;
-	align-items: center;
+	align-items: left;
+	text-align: left;
 	justify-content: center;
 	padding: 0;
 	border: none;
@@ -457,10 +458,6 @@ main {
 	background: white;
 	transition: transform 0.2s ease, opacity 0.2s ease;
 }
-
-/*.menu-button:active {
-	transform: translateY(-50%) scale(0.96);
-}*/
 
 .menu-modal {
 	position: fixed;
