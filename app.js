@@ -120,7 +120,7 @@ async function loadShops() {
 		.from(TABLE_NAME)
 		.select(`
 			*,
-			areas (
+			areas!shops_area_id_fkey (
 				id,
 				name
 			)
@@ -134,12 +134,10 @@ async function loadShops() {
 		return;
 	}
 
-	shops = (data || []).map((shop) => {
-		return {
-			...shop,
-			area_name: shop.areas?.name || "未分類"
-		};
-	});
+	shops = (data || []).map((shop) => ({
+		...shop,
+		area_name: shop.areas?.name || "未分類"
+	}));
 
 	console.log("shops with areas:", shops);
 }
