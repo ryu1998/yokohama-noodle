@@ -226,7 +226,7 @@ async function loadLogs() {
 		.from(LOG_TABLE_NAME)
 		.select("*")
 		.order("logged_at", { ascending: false })
-		.order("id", { ascending: true });
+		.order("id", { ascending: false });
 
 	if (error) {
 		console.error(error);
@@ -762,8 +762,8 @@ function renderConquestProgress() {
 		<div class="total-progress-card">
 			<div class="total-progress-label">全店舗制覇率</div>
 			<div class="total-progress-main">
-				<span>${totalPercent}%</span>
-				<small>${visitedCount}/${totalCount}</small>
+				<span>${visitedCount}/${totalCount}</span>
+				<small>(${totalPercent}%)</small>
 			</div>
 			<div class="progress-bar large">
 				<div class="progress-bar-fill" style="width: ${totalPercent}%"></div>
@@ -780,7 +780,7 @@ function renderConquestProgress() {
 								<span class="area-progress-name">${escapeHtml(area.name)}</span>
 							</div>
 							<div class="area-progress-score">
-								${area.percent}% / ${area.visited}/${area.total}
+								${area.visited}/${area.total} (${area.percent}%)
 							</div>
 						</div>
 
