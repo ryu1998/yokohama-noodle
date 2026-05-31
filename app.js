@@ -371,6 +371,10 @@ function renderShopList() {
 				card.classList.add("visited");
 			}
 
+			if (isConquered) {
+				card.classList.add("area-conquered-card");
+			}
+
 			if (String(shop.id) === String(selectedShopId)) {
 				card.classList.add("selected");
 			}

@@ -973,6 +973,18 @@ main {
 		0 0 22px rgba(216, 67, 21, 0.22);
 }
 
+.shop-card.area-conquered-card {
+	background: linear-gradient(135deg, #fffdf0, #fff3b0);
+	border-color: rgba(255, 179, 0, 0.7);
+	box-shadow:
+		0 0 10px rgba(255, 193, 7, 0.22),
+		0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.shop-card.area-conquered-card.visited {
+	border-left: 8px solid #ffb300;
+}
+
 @keyframes pinGlow {
 	from {
 		filter:
