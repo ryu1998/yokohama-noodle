@@ -39,9 +39,14 @@ const menuButton = document.getElementById("menuButton");
 const menuModal = document.getElementById("menuModal");
 const closeMenu = document.getElementById("closeMenu");
 
-const openMemberModal = document.getElementById("openMemberModal");
-const memberModal = document.getElementById("memberModal");
-const closeMemberModal = document.getElementById("closeMemberModal");
+const openAddMemberModal = document.getElementById("openAddMemberModal");
+const addMemberModal = document.getElementById("addMemberModal");
+const closeAddMemberModal = document.getElementById("closeAddMemberModal");
+
+const openMemberStatusModal = document.getElementById("openMemberStatusModal");
+const memberStatusModal = document.getElementById("memberStatusModal");
+const closeMemberStatusModal = document.getElementById("closeMemberStatusModal");
+
 const memberForm = document.getElementById("memberForm");
 const memberNameInput = document.getElementById("memberName");
 const memberList = document.getElementById("memberList");
@@ -123,7 +128,8 @@ async function loadShops() {
 			*,
 			areas!shops_area_id_fkey (
 				id,
-				name
+				name,
+				display_order
 			)
 		`)
 		.order("area_id", { ascending: true });
@@ -137,18 +143,21 @@ async function loadShops() {
 	shops = (data || [])
 		.map((shop) => ({
 			...shop,
-			area_name: shop.areas?.name || "未分類"
+			area_name: shop.areas?.name || "未分類",
+			area_order: shop.areas?.display_order ?? 999
 		}))
 		.sort((a, b) => {
-			const areaA = Number(a.area_id ?? 999999);
-			const areaB = Number(b.area_id ?? 999999);
-
-			if (areaA !== areaB) {
-				return areaA - areaB;
+			if (a.area_order !== b.area_order) {
+				return a.area_order - b.area_order;
 			}
 
-			const scoreA = Number(a.x ?? 0) ** 2 + Number(a.y ?? 0) ** 2;
-			const scoreB = Number(b.x ?? 0) ** 2 + Number(b.y ?? 0) ** 2;
+			const scoreA =
+				(Number(a.x ?? 0) ** 2) +
+				(Number(a.y ?? 0) ** 2);
+
+			const scoreB =
+				(Number(b.x ?? 0) ** 2) +
+				(Number(b.y ?? 0) ** 2);
 
 			return scoreB - scoreA;
 		});
@@ -179,7 +188,7 @@ async function loadAreas() {
 	const { data, error } = await supabaseClient
 		.from(AREA_TABLE_NAME)
 		.select("*")
-		.order("id", { ascending: true });
+		.order("display_order", { ascending: true });
 
 	if (error) {
 		console.error(error);
@@ -589,13 +598,23 @@ menuModal.addEventListener("click", (event) => {
 	}
 });
 
-openMemberModal.addEventListener("click", () => {
+openAddMemberModal.addEventListener("click", () => {
 	menuModal.classList.add("hidden");
-	memberModal.classList.remove("hidden");
+	addMemberModal.classList.remove("hidden");
 });
 
-closeMemberModal.addEventListener("click", () => {
-	memberModal.classList.add("hidden");
+closeAddMemberModal.addEventListener("click", () => {
+	addMemberModal.classList.add("hidden");
+});
+
+openMemberStatusModal.addEventListener("click", () => {
+	menuModal.classList.add("hidden");
+	renderMemberList();
+	memberStatusModal.classList.remove("hidden");
+});
+
+closeMemberStatusModal.addEventListener("click", () => {
+	memberStatusModal.classList.add("hidden");
 });
 
 openRecordModal.addEventListener("click", () => {

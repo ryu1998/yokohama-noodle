@@ -77,7 +77,8 @@
 		<button id="closeMenu" class="close-button">×</button>
 		<h2>メニュー</h2>
 
-		<button id="openMemberModal" class="menu-item-button">メンバー管理</button>
+		<button id="openAddMemberModal" class="menu-item-button">メンバー追加</button>
+		<button id="openMemberStatusModal" class="menu-item-button">メンバー状態</button>
 		<button id="openRecordModal" class="menu-item-button">記録</button>
 		<div class="admin-menu-area">
 			<button id="openAdminModal" class="menu-item-button admin-button">管理者用</button>
@@ -85,23 +86,29 @@
 	</div>
 	</div>
 
-	<div id="memberModal" class="modal hidden">
-	<div class="modal-content">
-		<button id="closeMemberModal" class="close-button">×</button>
-		<h2>メンバー管理</h2>
+	<div id="addMemberModal" class="modal hidden">
+		<div class="modal-content">
+			<button id="closeAddMemberModal" class="close-button">×</button>
+			<h2>メンバー追加</h2>
 
-		<form id="memberForm" class="visit-form">
-			<label>
-			メンバー名
-			<input type="text" id="memberName" required placeholder="例：ラーメンマン" />
-			</label>
+			<form id="memberForm" class="visit-form">
+				<label>
+					メンバー名
+					<input type="text" id="memberName" required placeholder="例：ラーメンマン" />
+				</label>
 
-			<button type="submit">追加</button>
-		</form>
-		<hr class="admin-divider" />
-		<h3>メンバー状態</h3>
-		<div id="memberList" class="member-list"></div>
+				<button type="submit">追加</button>
+			</form>
+		</div>
 	</div>
+
+	<div id="memberStatusModal" class="modal hidden">
+		<div class="modal-content">
+			<button id="closeMemberStatusModal" class="close-button">×</button>
+			<h2>メンバー状態</h2>
+
+			<div id="memberList" class="member-list"></div>
+		</div>
 	</div>
 
 	<div id="recordModal" class="modal hidden">

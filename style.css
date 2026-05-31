@@ -577,7 +577,11 @@ main {
 	margin-right: 8px;
 }
 
-#openMemberModal::before {
+#openAddMemberModal::before {
+	content: "➕";
+}
+
+#openMemberStatusModal::before {
 	content: "👥";
 }
 
