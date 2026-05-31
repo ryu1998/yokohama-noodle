@@ -265,22 +265,43 @@ function renderShopList() {
 				: "";
 
 			card.innerHTML = `
-				<h3>${escapeHtml(shop.shop_name)}</h3>
+				<div class="shop-card-main">
+					<div>
+						<h3>${escapeHtml(shop.shop_name)}</h3>
 
-				<div class="shop-card-meta">
-					<span class="badge ${isVisited ? "visited" : "unvisited"}">
-						${isVisited ? "訪問済み" : "未訪問"}
-					</span>
+						<div class="shop-card-meta">
+							<span class="badge ${isVisited ? "visited" : "unvisited"}">
+								${isVisited ? "訪問済み" : "未訪問"}
+							</span>
 
-					${
-						isVisited
-							? `<span class="visit-info">${visitInfo}</span>`
-							: ""
-					}
+							${
+								isVisited
+									? `<span class="visit-info">${visitInfo}</span>`
+									: ""
+							}
+						</div>
+					</div>
+
+					<button
+						type="button"
+						class="shop-open-button"
+						data-shop-id="${shop.id}"
+					>
+						開く
+					</button>
 				</div>
 			`;
 
 			card.addEventListener("click", () => {
+				selectShop(shop.id);
+				focusShopOnMap(shop.id);
+			});
+
+			const openButton = card.querySelector(".shop-open-button");
+
+			openButton.addEventListener("click", (event) => {
+				event.stopPropagation();
+
 				selectShop(shop.id);
 				openShopModal(shop.id);
 			});
@@ -455,6 +476,37 @@ function renderRanking() {
 // ==============================
 // 操作
 // ==============================
+
+function focusShopOnMap(shopId) {
+	const shop = shops.find((s) => String(s.id) === String(shopId));
+	if (!shop) return;
+
+	selectedShopId = shop.id;
+
+	mapZoom = 2.5;
+
+	const rect = mapWrapper.getBoundingClientRect();
+
+	const shopX = (Number(shop.x) / 100) * rect.width;
+	const shopY = (Number(shop.y) / 100) * rect.height;
+
+	const centerX = rect.width / 2;
+	const centerY = rect.height / 2;
+
+	mapPanX = centerX - (centerX + (shopX - centerX) * mapZoom);
+	mapPanY = centerY - (centerY + (shopY - centerY) * mapZoom);
+
+	updateMapZoom();
+	renderShopList();
+
+	const selectedCard = document.querySelector(".shop-card.selected");
+	if (selectedCard) {
+		selectedCard.scrollIntoView({
+			behavior: "smooth",
+			block: "center"
+		});
+	}
+}
 
 function selectShop(shopId) {
 	selectedShopId = shopId;
@@ -899,7 +951,7 @@ function clampMapPan() {
 
 function updateMapZoom() {
 	clampMapPan();
-	
+
 	mapImage.style.transform = `translate(${mapPanX}px, ${mapPanY}px) scale(${mapZoom})`;
 	renderPins();
 }
