@@ -214,9 +214,9 @@ function renderPins() {
 	pinLayer.innerHTML = "";
 
 	shops.forEach((shop) => {
-		const pin = document.createElement("button");
-
+		const pin = document.createElement("span");
 		pin.className = `pin ${shop.status === "visited" ? "visited" : "unvisited"}`;
+		pin.innerHTML = `<span class="pin-dot"></span>`;
 
 		const pinAnchor = document.createElement("button");
 		pinAnchor.className = "pin-anchor";
