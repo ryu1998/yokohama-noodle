@@ -887,7 +887,19 @@ adminAddShopButton.addEventListener("click", async () => {
 	}
 });
 
+function clampMapPan() {
+	const rect = mapWrapper.getBoundingClientRect();
+
+	const maxPanX = ((mapZoom - 1) * rect.width) / 2;
+	const maxPanY = ((mapZoom - 1) * rect.height) / 2;
+
+	mapPanX = Math.min(Math.max(mapPanX, -maxPanX), maxPanX);
+	mapPanY = Math.min(Math.max(mapPanY, -maxPanY), maxPanY);
+}
+
 function updateMapZoom() {
+	clampMapPan();
+	
 	mapImage.style.transform = `translate(${mapPanX}px, ${mapPanY}px) scale(${mapZoom})`;
 	renderPins();
 }
