@@ -63,6 +63,11 @@ const adminSqlCoordinate = document.getElementById("adminSqlCoordinate");
 const adminUpdateStatus = document.getElementById("adminUpdateStatus");
 const adminCopyStatus = document.getElementById("adminCopyStatus");
 
+const adminNewShopName = document.getElementById("adminNewShopName");
+const adminNewShopArea = document.getElementById("adminNewShopArea");
+const adminAddShopButton = document.getElementById("adminAddShopButton");
+const adminAddShopStatus = document.getElementById("adminAddShopStatus");
+
 let shops = [];
 let selectedShopId = null;
 let members = [];
@@ -93,6 +98,7 @@ async function init() {
 	renderMemberSelect();
 	renderMemberList();
 	renderAdminShopSelect();
+	renderAdminAreaSelect();
 }
 
 // ==============================
@@ -503,6 +509,7 @@ closeRecordModal.addEventListener("click", () => {
 openAdminModal.addEventListener("click", () => {
 	menuModal.classList.add("hidden");
 	renderAdminShopSelect();
+	renderAdminAreaSelect();
 	adminUpdateStatus.textContent = "";
 	adminUpdateStatus.className = "admin-status";
 	adminModal.classList.remove("hidden");
@@ -789,6 +796,69 @@ function formatShortDate(value) {
 
 	return `${month}/${day} ${hours}:${minutes}`;
 }
+
+function renderAdminAreaSelect() {
+	if (!adminNewShopArea) return;
+
+	adminNewShopArea.innerHTML = `<option value="">エリアを選択</option>`;
+
+	areas.forEach((area) => {
+		const option = document.createElement("option");
+		option.value = area.id;
+
+		// areas.name ならこっち
+		option.textContent = area.name;
+
+		// もしカラム名が areas._name なら上を消してこっち
+		// option.textContent = area._name;
+
+		adminNewShopArea.appendChild(option);
+	});
+}
+
+adminAddShopButton.addEventListener("click", async () => {
+	const shopName = adminNewShopName.value.trim();
+	const areaId = adminNewShopArea.value;
+
+	if (!shopName || !areaId) {
+		adminAddShopStatus.textContent = "店舗名とエリアを入力してください";
+		adminAddShopStatus.className = "admin-status error";
+		return;
+	}
+
+	adminAddShopStatus.textContent = "店舗を追加中...";
+	adminAddShopStatus.className = "admin-status";
+
+	try {
+		const { error } = await supabaseClient
+			.from(TABLE_NAME)
+			.insert({
+					shop_name: shopName,
+					area_id: Number(areaId),
+					status: "unvisited",
+					x: 50,
+					y: 50
+			});
+
+		if (error) throw error;
+
+		adminNewShopName.value = "";
+		adminNewShopArea.value = "";
+
+		await loadShops();
+
+		renderPins();
+		renderShopList();
+		renderAdminShopSelect();
+
+		adminAddShopStatus.textContent = "店舗を追加しました。座標は地図クリックで調整してください";
+		adminAddShopStatus.className = "admin-status success";
+	} catch (error) {
+		console.error(error);
+		adminAddShopStatus.textContent = "店舗追加に失敗しました";
+		adminAddShopStatus.className = "admin-status error";
+	}
+});
 
 // ==============================
 // utility

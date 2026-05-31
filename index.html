@@ -90,7 +90,7 @@
 <form id="memberForm" class="visit-form">
 <label>
 メンバー名
-<input type="text" id="memberName" required placeholder="例：りゅうのすけ" />
+<input type="text" id="memberName" required placeholder="例：ラーメンマン" />
 </label>
 
 <button type="submit">追加</button>
@@ -115,6 +115,8 @@
 <h2>管理者用</h2>
 
 <div class="admin-panel">
+<h3>店舗座標更新</h3>
+
 <label class="admin-field">
 <span>座標を更新する店舗</span>
 <select id="adminShopSelect">
@@ -136,6 +138,33 @@
 <div id="adminUpdateStatus"></div>
 <div id="adminCopyStatus"></div>
 </div>
+
+<hr class="admin-divider">
+
+<div class="admin-add-shop">
+<h3>店舗追加</h3>
+
+<label class="admin-field">
+<span>店舗名</span>
+<input type="text" id="adminNewShopName" placeholder="例：吉村家" />
+</label>
+
+<label class="admin-field">
+<span>エリア</span>
+<select id="adminNewShopArea">
+<option value="">エリアを選択</option>
+</select>
+</label>
+
+<button id="adminAddShopButton" type="button">
+店舗を追加
+</button>
+
+<div id="adminAddShopStatus" class="admin-status"></div>
+</div>
+
+<hr class="admin-divider">
+
 </div>
 </div>
 </div>

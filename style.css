@@ -537,6 +537,13 @@ main {
 	margin-top: 16px;
 }
 
+.admin-panel h3,
+.admin-add-shop h3 {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 800;
+}
+
 #toggleCoordinateMode {
 	padding: 12px;
 	border: none;
@@ -578,6 +585,43 @@ main {
 .menu-item-button:active {
 	transform: scale(0.98);
 	background: #fff3e0;
+}
+
+.admin-add-shop {
+	display: grid;
+	gap: 12px;
+}
+
+.admin-add-shop h3 {
+	margin: 0;
+	font-size: 16px;
+}
+
+.admin-field input {
+	width: 100%;
+	padding: 10px;
+	border: 1px solid #ccc;
+	border-radius: 10px;
+	font-size: 16px;
+	background: white;
+}
+
+#adminAddShopButton {
+	padding: 12px;
+	border: none;
+	border-radius: 12px;
+	background: #d84315;
+	color: white;
+	font-size: 16px;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+.admin-divider {
+	width: 100%;
+	border: none;
+	border-top: 1px solid #ddd;
+	margin: 12px 0;
 }
 
 .visit-form select {
