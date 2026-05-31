@@ -100,12 +100,12 @@ main {
 	width: 22px;
 	height: 22px;
 
-	transform: translate(-50%, -100%);
 	cursor: pointer;
 
 	border-radius: 50% 50% 50% 0;
-	transform-origin: center center;
-	rotate: -45deg;
+
+	transform-origin: center bottom;
+	transform: translate(-50%, -100%) rotate(-45deg);
 
 	border: 2px solid rgba(255,255,255,0.9);
 

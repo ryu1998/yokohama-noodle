@@ -90,6 +90,7 @@ let startPanY = 0;
 let collapsedAreaIds = new Set();
 let pinchStartDistance = null;
 let pinchStartZoom = 1;
+let hasMapMoved = false;
 
 // ==============================
 // 初期化
@@ -683,6 +684,11 @@ memberList.addEventListener("click", async (event) => {
 });
 
 mapWrapper.addEventListener("click", async (event) => {
+	if (hasMapMoved) {
+		hasMapMoved = false;
+		return;
+	}
+
 	if (isMapDragging) {
 		return;
 	}
@@ -1035,16 +1041,14 @@ mapWrapper.addEventListener("wheel", (event) => {
 });
 
 mapWrapper.addEventListener("pointerdown", (event) => {
-	if (event.pointerType === "touch") {
-	// スマホは常にドラッグ可能
-	} else {
-		if (mapZoom <= 1) return;
-}
+	if (event.pointerType !== "touch" && mapZoom <= 1) return;
 	if (event.target.closest(".pin")) return;
 
 	event.preventDefault();
 
 	isMapDragging = true;
+	hasMapMoved = false;
+
 	dragStartX = event.clientX;
 	dragStartY = event.clientY;
 	startPanX = mapPanX;
@@ -1059,6 +1063,10 @@ mapWrapper.addEventListener("pointermove", (event) => {
 
 	const dx = event.clientX - dragStartX;
 	const dy = event.clientY - dragStartY;
+
+	if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+		hasMapMoved = true;
+	}
 
 	mapPanX = startPanX + dx;
 	mapPanY = startPanY + dy;
