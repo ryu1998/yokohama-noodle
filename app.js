@@ -82,6 +82,10 @@ const adminAddShopStatus = document.getElementById("adminAddShopStatus");
 
 const mapImage = document.querySelector(".map-image");
 
+const areaConquestModal = document.getElementById("areaConquestModal");
+const closeAreaConquestModal = document.getElementById("closeAreaConquestModal");
+const areaConquestSubtitle = document.getElementById("areaConquestSubtitle");
+
 const completeConquestModal = document.getElementById("completeConquestModal");
 const closeCompleteConquestModal = document.getElementById("closeCompleteConquestModal");
 
@@ -763,6 +767,16 @@ closeAdminModal.addEventListener("click", () => {
 	adminModal.classList.add("hidden");
 });
 
+closeAreaConquestModal.addEventListener("click", () => {
+	areaConquestModal.classList.add("hidden");
+});
+
+areaConquestModal.addEventListener("click", (event) => {
+	if (event.target === areaConquestModal) {
+		areaConquestModal.classList.add("hidden");
+	}
+});
+
 closeCompleteConquestModal.addEventListener("click", () => {
 	completeConquestModal.classList.add("hidden");
 });
@@ -1005,6 +1019,12 @@ visitForm.addEventListener("submit", async (event) => {
 
 		renderVisitHistory(updatedShop);
 
+		showAreaConquestModalIfNeeded(
+			targetShop.area_id,
+			beforeShops,
+			updatedShops
+		);
+
 		showCompleteConquestModalIfNeeded(
 			beforeShops,
 			updatedShops
@@ -1243,6 +1263,23 @@ function isFullyConquered(targetShops) {
 		targetShops.length > 0 &&
 		targetShops.every((shop) => shop.status === "visited")
 	);
+}
+
+function showAreaConquestModalIfNeeded(areaId, beforeShops, afterShops) {
+	const beforeConquered = isAreaConquered(areaId, beforeShops);
+	const afterConquered = isAreaConquered(areaId, afterShops);
+
+	if (beforeConquered || !afterConquered) {
+		return;
+	}
+
+	const areaName =
+		areaMap[String(areaId)]?.name ||
+		afterShops.find((shop) => String(shop.area_id) === String(areaId))?.area_name ||
+		"エリア";
+
+	areaConquestSubtitle.textContent = `${areaName} 制覇達成！`;
+	areaConquestModal.classList.remove("hidden");
 }
 
 function showCompleteConquestModalIfNeeded(beforeShops, afterShops) {
