@@ -263,6 +263,16 @@ function renderShopList() {
 	}, {});
 
 	Object.values(groupedShops).forEach((group) => {
+		const totalCount = group.shops.length;
+
+		const visitedCount = group.shops.filter(
+			(shop) => shop.status === "visited"
+		).length;
+
+		const isConquered =
+			totalCount > 0 &&
+			visitedCount === totalCount;
+
 		const areaGroup = document.createElement("div");
 		areaGroup.className = "area-group";
 
@@ -272,9 +282,23 @@ function renderShopList() {
 		areaTitle.type = "button";
 		areaTitle.className = `area-title-button ${isCollapsed ? "collapsed" : ""}`;
 		areaTitle.innerHTML = `
-			<span>${escapeHtml(group.name)}</span>
-			<span class="area-toggle-icon">${isCollapsed ? "▶" : "▼"}</span>
+			<span>
+				${escapeHtml(group.name)}
+				${
+					isConquered
+						? `<span class="area-conquered">👑 制圧！</span>`
+						: ` (${visitedCount}/${totalCount})`
+				}
+			</span>
+
+			<span class="area-toggle-icon">
+				${isCollapsed ? "▶" : "▼"}
+			</span>
 		`;
+
+		if (isConquered) {
+			areaTitle.classList.add("conquered");
+		}
 
 		const shopContainer = document.createElement("div");
 		shopContainer.className = `area-shop-container ${isCollapsed ? "collapsed" : ""}`;
