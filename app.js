@@ -89,6 +89,16 @@ const areaConquestSubtitle = document.getElementById("areaConquestSubtitle");
 const completeConquestModal = document.getElementById("completeConquestModal");
 const closeCompleteConquestModal = document.getElementById("closeCompleteConquestModal");
 
+const openMemberRecordModal = document.getElementById("openMemberRecordModal");
+const memberRecordModal = document.getElementById("memberRecordModal");
+const closeMemberRecordModal = document.getElementById("closeMemberRecordModal");
+const memberRecordList = document.getElementById("memberRecordList");
+
+const openConquestProgressModal = document.getElementById("openConquestProgressModal");
+const conquestProgressModal = document.getElementById("conquestProgressModal");
+const closeConquestProgressModal = document.getElementById("closeConquestProgressModal");
+const conquestProgressContent = document.getElementById("conquestProgressContent");
+
 const MEMBER_STATUSES = [
 	{ value: "余裕", label: "😋 余裕" },
 	{ value: "普通", label: "🙂 普通" },
@@ -609,34 +619,179 @@ function renderTabelog() {
 }
 
 function renderRanking() {
-	const visitedShops = shops.filter((shop) => shop.status === "visited" && (memberMap[String(shop.visitor_id)]?.name || shop.visitor_name));
+	const ranking = members
+		.map((member) => {
+			const count = shops.filter(
+				(shop) => String(shop.visitor_id) === String(member.id)
+			).length;
 
-	const rankingMap = visitedShops.reduce((map, shop) => {
-		const name = memberMap[String(shop.visitor_id)]?.name || shop.visitor_name;
-		map[name] = (map[name] || 0) + 1;
-		return map;
-	}, {});
-
-	const ranking = Object.entries(rankingMap)
-		.map(([name, count]) => ({ name, count }))
+			return {
+				name: member.name,
+				status: member.status || "普通",
+				count
+			};
+		})
 		.sort((a, b) => b.count - a.count);
 
 	if (ranking.length === 0) {
-		rankingList.innerHTML = `<p>まだ訪問記録がありません。</p>`;
+		rankingList.innerHTML = `<p>まだメンバーがいません。</p>`;
 		return;
 	}
 
 	rankingList.innerHTML = ranking
-		.map((item, index) => `
-			<div class="ranking-item">
-				<div>
-					<span class="ranking-rank">${index + 1}位</span>
-					${escapeHtml(item.name)}
+		.map((item, index) => {
+			const rankIcon = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}`;
+
+			return `
+				<div class="ranking-card ${index < 3 ? "top-rank" : ""}">
+					<div class="ranking-left">
+						<div class="ranking-rank-badge">${rankIcon}</div>
+						<div>
+							<div class="ranking-name">${escapeHtml(item.name)}</div>
+							<div class="ranking-status">${escapeHtml(getStatusLabel(item.status))}</div>
+						</div>
+					</div>
+
+					<div class="ranking-cups">
+						<span>${item.count}</span>
+						杯
+					</div>
 				</div>
-				<div class="ranking-count">${item.count}店</div>
-			</div>
-		`)
+			`;
+		})
 		.join("");
+}
+
+function renderMemberRecords() {
+	if (!memberRecordList) return;
+
+	const memberRecords = members
+		.map((member) => {
+			const memberShops = shops.filter(
+				(shop) => String(shop.visitor_id) === String(member.id)
+			);
+
+			const areaCounts = memberShops.reduce((map, shop) => {
+				const areaName = shop.area_name || "未分類";
+				map[areaName] = (map[areaName] || 0) + 1;
+				return map;
+			}, {});
+
+			const favoriteArea = Object.entries(areaCounts)
+				.sort((a, b) => b[1] - a[1])[0];
+
+			const latestShop = memberShops
+				.slice()
+				.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+
+			return {
+				member,
+				count: memberShops.length,
+				favoriteAreaName: favoriteArea?.[0] || "なし",
+				favoriteAreaCount: favoriteArea?.[1] || 0,
+				latestShop
+			};
+		})
+		.sort((a, b) => b.count - a.count);
+
+	memberRecordList.innerHTML = memberRecords
+		.map((record) => {
+			const statusLabel = getStatusLabel(record.member.status);
+			const latestText = record.latestShop
+				? `${escapeHtml(record.latestShop.shop_name)} / ${formatShortDate(record.latestShop.created_at)}`
+				: "まだ訪問なし";
+
+			return `
+				<div class="member-record-card">
+					<div class="member-record-header">
+						<div>
+							<div class="member-record-name">${escapeHtml(record.member.name)}</div>
+							<div class="member-record-status">${escapeHtml(statusLabel)}</div>
+						</div>
+						<div class="member-record-cups">
+							<span>${record.count}</span>杯
+						</div>
+					</div>
+
+					<div class="member-record-grid">
+						<div class="member-record-mini">
+							<div class="mini-label">得意エリア</div>
+							<div class="mini-value">${escapeHtml(record.favoriteAreaName)}</div>
+							<div class="mini-sub">${record.favoriteAreaCount}杯</div>
+						</div>
+
+						<div class="member-record-mini">
+							<div class="mini-label">最新訪問</div>
+							<div class="mini-value">${latestText}</div>
+						</div>
+					</div>
+				</div>
+			`;
+		})
+		.join("");
+}
+
+function renderConquestProgress() {
+	if (!conquestProgressContent) return;
+
+	const totalCount = shops.length;
+	const visitedCount = shops.filter((shop) => shop.status === "visited").length;
+	const totalPercent = totalCount === 0 ? 0 : Math.round((visitedCount / totalCount) * 100);
+
+	const areaProgressList = areas
+		.map((area) => {
+			const areaShops = shops.filter(
+				(shop) => String(shop.area_id) === String(area.id)
+			);
+
+			const areaTotal = areaShops.length;
+			const areaVisited = areaShops.filter((shop) => shop.status === "visited").length;
+			const percent = areaTotal === 0 ? 0 : Math.round((areaVisited / areaTotal) * 100);
+
+			return {
+				name: area.name,
+				visited: areaVisited,
+				total: areaTotal,
+				percent
+			};
+		})
+		.filter((area) => area.total > 0)
+		.sort((a, b) => b.percent - a.percent || b.visited - a.visited);
+
+	conquestProgressContent.innerHTML = `
+		<div class="total-progress-card">
+			<div class="total-progress-label">全店舗制覇率</div>
+			<div class="total-progress-main">
+				<span>${totalPercent}%</span>
+				<small>${visitedCount}/${totalCount}</small>
+			</div>
+			<div class="progress-bar large">
+				<div class="progress-bar-fill" style="width: ${totalPercent}%"></div>
+			</div>
+		</div>
+
+		<div class="area-progress-ranking">
+			${areaProgressList
+				.map((area, index) => `
+					<div class="area-progress-item">
+						<div class="area-progress-head">
+							<div>
+								<span class="area-progress-rank">${index + 1}</span>
+								<span class="area-progress-name">${escapeHtml(area.name)}</span>
+							</div>
+							<div class="area-progress-score">
+								${area.percent}% / ${area.visited}/${area.total}
+							</div>
+						</div>
+
+						<div class="progress-bar">
+							<div class="progress-bar-fill" style="width: ${area.percent}%"></div>
+						</div>
+					</div>
+				`)
+				.join("")}
+		</div>
+	`;
 }
 
 // ==============================
@@ -919,6 +1074,26 @@ function getDistance(touch1, touch2) {
 
 	return Math.sqrt(dx * dx + dy * dy);
 }
+
+openMemberRecordModal.addEventListener("click", () => {
+	menuModal.classList.add("hidden");
+	renderMemberRecords();
+	memberRecordModal.classList.remove("hidden");
+});
+
+closeMemberRecordModal.addEventListener("click", () => {
+	memberRecordModal.classList.add("hidden");
+});
+
+openConquestProgressModal.addEventListener("click", () => {
+	menuModal.classList.add("hidden");
+	renderConquestProgress();
+	conquestProgressModal.classList.remove("hidden");
+});
+
+closeConquestProgressModal.addEventListener("click", () => {
+	conquestProgressModal.classList.add("hidden");
+});
 
 // ==============================
 // 登録処理
