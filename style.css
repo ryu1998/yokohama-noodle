@@ -932,6 +932,37 @@ main {
 	color: #b26a00;
 }
 
+.complete-conquest-content {
+	text-align: center;
+	background:
+		radial-gradient(circle at top, #fff8c4, transparent 45%),
+		linear-gradient(180deg, #ffffff, #fff3e0);
+	border: 3px solid #ffb300;
+	box-shadow:
+		0 0 20px rgba(255, 193, 7, 0.55),
+		0 0 45px rgba(255, 152, 0, 0.35);
+}
+
+.complete-conquest-title {
+	margin-top: 12px;
+	font-size: 30px;
+	font-weight: 900;
+	color: #d84315;
+}
+
+.complete-conquest-subtitle {
+	margin-top: 10px;
+	font-size: 20px;
+	font-weight: 800;
+	color: #7a4f00;
+}
+
+.complete-conquest-message {
+	margin-top: 14px;
+	font-size: 15px;
+	color: #555;
+}
+
 @keyframes pinGlow {
 	from {
 		filter:

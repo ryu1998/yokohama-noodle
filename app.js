@@ -82,6 +82,9 @@ const adminAddShopStatus = document.getElementById("adminAddShopStatus");
 
 const mapImage = document.querySelector(".map-image");
 
+const completeConquestModal = document.getElementById("completeConquestModal");
+const closeCompleteConquestModal = document.getElementById("closeCompleteConquestModal");
+
 const MEMBER_STATUSES = [
 	{ value: "余裕", label: "😋 余裕" },
 	{ value: "普通", label: "🙂 普通" },
@@ -748,6 +751,16 @@ closeAdminModal.addEventListener("click", () => {
 	adminModal.classList.add("hidden");
 });
 
+closeCompleteConquestModal.addEventListener("click", () => {
+	completeConquestModal.classList.add("hidden");
+});
+
+completeConquestModal.addEventListener("click", (event) => {
+	if (event.target === completeConquestModal) {
+		completeConquestModal.classList.add("hidden");
+	}
+});
+
 toggleCoordinateModeButton.addEventListener("click", () => {
 	isCoordinateMode = !isCoordinateMode;
 
@@ -908,6 +921,8 @@ visitForm.addEventListener("submit", async (event) => {
 
 	const loggedAt = new Date().toISOString();
 
+	const beforeShops = structuredClone(shops);
+
 	try {
 		const photoUrl = await uploadPhoto(selectedShopId, visitorId, file);
 
@@ -965,8 +980,16 @@ visitForm.addEventListener("submit", async (event) => {
 		renderMemberSelect();
 		renderMemberList();
 
-		const updatedShop = shops.find((s) => String(s.id) === String(selectedShopId));
+		const updatedShop = shops.find(
+			(s) => String(s.id) === String(selectedShopId)
+		);
+
 		renderVisitHistory(updatedShop);
+
+		showCompleteConquestModalIfNeeded(
+			beforeShops,
+			updatedShops
+		);
 
 		if (updatedShop.status === "visited") {
 			visitForm.classList.add("hidden");
@@ -1169,6 +1192,22 @@ async function insertConquestLogIfNeeded(areaId, updatedShops, updatedMembers, l
 
 	if (error && error.code !== "23505") {
 		throw error;
+	}
+}
+
+function isFullyConquered(targetShops) {
+	return (
+		targetShops.length > 0 &&
+		targetShops.every((shop) => shop.status === "visited")
+	);
+}
+
+function showCompleteConquestModalIfNeeded(beforeShops, afterShops) {
+	const beforeComplete = isFullyConquered(beforeShops);
+	const afterComplete = isFullyConquered(afterShops);
+
+	if (!beforeComplete && afterComplete) {
+		completeConquestModal.classList.remove("hidden");
 	}
 }
 
