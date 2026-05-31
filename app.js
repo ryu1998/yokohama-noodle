@@ -1,9 +1,27 @@
+// ============================================================
+// app.js
+// 横浜麺マップのメイン処理
+//
+// 役割：
+// - Supabaseから店舗・エリア・メンバー・ログを取得
+// - 地図ピン、店舗リスト、各種モーダルを描画
+// - 訪問登録、制覇ログ、管理者用の座標更新を行う
+//
+// 読み方：
+// 1. 設定・DOM取得・状態変数
+// 2. 初期化 / データ取得
+// 3. 描画処理
+// 4. 画面操作 / イベント
+// 5. 登録処理 / ログ処理
+// 6. 地図操作 / 共通関数
+// ============================================================
+
 // ==============================
-// Supabase設定
+// 1. Supabase設定 / テーブル名
 // ==============================
 
 const SUPABASE_URL = "https://fdkyhobujjssahrdnvxj.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZka3lob2J1ampzc2FocmRudnhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2Nzk2NTksImV4cCI6MjA5NDI1NTY1OX0.puO3ciHMGe_B140npC_WM5p3ilDiS9adzE0eZIUYJ3Y";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6ImZka3lob2J1ampzc2FocmRudnhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2Nzk2NTksImV4cCI6MjA5NDI1NTY1OX0.puO3ciHMGe_B140npC_WM5p3ilDiS9adzE0eZIUYJ3Y";
 
 const TABLE_NAME = "shops";
 const MEMBER_TABLE_NAME = "members";
@@ -18,7 +36,7 @@ let areaMap = {};
 let memberMap = {};
 
 // ==============================
-// DOM
+// 2. DOM参照
 // ==============================
 
 const pinLayer = document.getElementById("pinLayer");
@@ -99,6 +117,11 @@ const conquestProgressModal = document.getElementById("conquestProgressModal");
 const closeConquestProgressModal = document.getElementById("closeConquestProgressModal");
 const conquestProgressContent = document.getElementById("conquestProgressContent");
 
+// ==============================
+// 3. アプリ状態 / 定数
+// ==============================
+
+// メンバーの満腹状態。DBに保存する value と画面表示用 label をまとめて管理する。
 const MEMBER_STATUSES = [
 	{ value: "余裕", label: "😋 余裕" },
 	{ value: "普通", label: "🙂 普通" },
@@ -126,25 +149,31 @@ let pinchStartZoom = 1;
 let hasMapMoved = false;
 
 // ==============================
-// 初期化
+// 4. 初期化
 // ==============================
 
 init();
 
 // グローバルエラーをキャッチしてコンソールに出力
-window.addEventListener('error', (e) => {
-	console.error('Uncaught error:', e.error || e.message, e);
+window.addEventListener("error", (e) => {
+	console.error("Uncaught error:", e.error || e.message, e);
 });
 
 async function init() {
+	// 依存関係があるため、マスタ系 → 店舗 → ログの順に読み込む。
 	await loadAreas();
-	console.log('areas loaded:', areas.length, areaMap);
+	console.log("areas loaded:", areas.length, areaMap);
+
 	await loadMembers();
-	console.log('members loaded:', members.length, Object.keys(memberMap).length);
+	console.log("members loaded:", members.length, Object.keys(memberMap).length);
+
 	await loadShops();
-	console.log('shops loaded:', shops.length);
+	console.log("shops loaded:", shops.length);
+
 	await loadLogs();
-	console.log('logs loaded:', logs.length);
+	console.log("logs loaded:", logs.length);
+
+	// 初回描画。以降は登録・更新のたびに必要な画面だけ再描画する。
 	renderPins();
 	renderShopList();
 	renderCompletionStatus();
@@ -155,9 +184,10 @@ async function init() {
 }
 
 // ==============================
-// Supabaseから取得
+// 5. データ取得（Supabase）
 // ==============================
 
+// 店舗一覧を取得する。areasをJOINして、画面表示用の area_name / area_order を付与する。
 async function loadShops() {
 	const { data, error } = await supabaseClient
 		.from(TABLE_NAME)
@@ -202,6 +232,7 @@ async function loadShops() {
 	console.log("shops with areas:", shops);
 }
 
+// メンバー一覧を取得し、idから即参照できる memberMap も作り直す。
 async function loadMembers() {
 	const { data, error } = await supabaseClient
 		.from(MEMBER_TABLE_NAME)
@@ -221,6 +252,7 @@ async function loadMembers() {
 	}, {});
 }
 
+// 食べログ風タイムラインに表示するログを新しい順で取得する。
 async function loadLogs() {
 	const { data, error } = await supabaseClient
 		.from(LOG_TABLE_NAME)
@@ -237,6 +269,7 @@ async function loadLogs() {
 	logs = data || [];
 }
 
+// エリア一覧を取得し、idから即参照できる areaMap も作り直す。
 async function loadAreas() {
 	const { data, error } = await supabaseClient
 		.from(AREA_TABLE_NAME)
@@ -257,9 +290,10 @@ async function loadAreas() {
 }
 
 // ==============================
-// 描画
+// 6. 描画処理
 // ==============================
 
+// 地図上のピンを再描画する。ズーム/パン状態もここで反映する。
 function renderPins() {
 	pinLayer.innerHTML = "";
 
@@ -268,8 +302,8 @@ function renderPins() {
 		pinAnchor.type = "button";
 		pinAnchor.className = "pin-anchor";
 
-	const pin = document.createElement("span");
-	pin.className = `pin ${shop.status === "visited" ? "visited" : "unvisited"}`;
+		const pin = document.createElement("span");
+		pin.className = `pin ${shop.status === "visited" ? "visited" : "unvisited"}`;
 
 		if (String(shop.id) === String(selectedShopId)) {
 			pin.classList.add("selected");
@@ -293,6 +327,7 @@ function renderPins() {
 	});
 }
 
+// 店舗リストをエリア単位でグルーピングして描画する。
 function renderShopList() {
 	shopList.innerHTML = "";
 
@@ -446,6 +481,7 @@ function renderShopList() {
 	renderCompletionStatus();
 }
 
+// 画面上部の訪問済み店舗数を更新する。
 function renderCompletionStatus() {
 	if (!completionStatus) return;
 
@@ -456,6 +492,7 @@ function renderCompletionStatus() {
 	completionStatus.textContent = `訪問済：\n${visitedShops}/${totalShops} 店舗\n(${percent}%)`;
 }
 
+// 管理者モーダルの店舗選択プルダウンを更新する。
 function renderAdminShopSelect() {
 	if (!adminShopSelect) return;
 
@@ -478,21 +515,22 @@ function renderAdminShopSelect() {
 	}
 }
 
-async function updateShopCoordinate(shopId, x, y) {
-	const { error } = await supabaseClient
-		.from(TABLE_NAME)
-		.update({ x, y })
-		.eq("id", shopId);
+// 管理者モーダルのエリア選択プルダウンを更新する。
+function renderAdminAreaSelect() {
+	if (!adminNewShopArea) return;
 
-	if (error) throw error;
+	adminNewShopArea.innerHTML = `<option value="">エリアを選択</option>`;
 
-	shops = shops.map((shop) =>
-		String(shop.id) === String(shopId)
-			? { ...shop, x, y }
-			: shop
-	);
+	areas.forEach((area) => {
+		const option = document.createElement("option");
+		option.value = area.id;
+		option.textContent = area.name;
+
+		adminNewShopArea.appendChild(option);
+	});
 }
 
+// 店舗モーダル内の訪問履歴を描画する。
 function renderVisitHistory(shop) {
 	if (shop.status !== "visited") {
 		visitHistory.innerHTML = `<span class="visit-status">未訪問</span>`;
@@ -527,6 +565,7 @@ function renderVisitHistory(shop) {
 	`;
 }
 
+// 訪問登録フォームのメンバー選択欄を更新する。
 function renderMemberSelect() {
 	visitorNameInput.innerHTML = `<option value="">メンバーを選択</option>`;
 
@@ -543,6 +582,7 @@ function renderMemberSelect() {
 	}
 }
 
+// メンバー状態モーダルの一覧を描画する。
 function renderMemberList() {
 	if (members.length === 0) {
 		memberList.innerHTML = `<p>メンバーがまだ登録されていません。</p>`;
@@ -565,6 +605,8 @@ function renderMemberList() {
 		.join("");
 }
 
+// 食べログ風ログモーダルを描画する。
+// 通常訪問、エリア制覇、完全制覇で表示を分ける。
 function renderTabelog() {
 	if (!tabelogList) return;
 
@@ -618,6 +660,7 @@ function renderTabelog() {
 		.join("");
 }
 
+// メンバー別の杯数ランキングを描画する。
 function renderRanking() {
 	const ranking = members
 		.map((member) => {
@@ -662,6 +705,8 @@ function renderRanking() {
 		.join("");
 }
 
+// 個人戦績モーダルを描画する。
+// 各メンバーの杯数、得意エリア、最新訪問を集計する。
 function renderMemberRecords() {
 	if (!memberRecordList) return;
 
@@ -731,6 +776,8 @@ function renderMemberRecords() {
 		.join("");
 }
 
+// 制覇率モーダルを描画する。
+// 全体制覇率とエリア別制覇率ランキングを表示する。
 function renderConquestProgress() {
 	if (!conquestProgressContent) return;
 
@@ -795,9 +842,10 @@ function renderConquestProgress() {
 }
 
 // ==============================
-// 操作
+// 7. 店舗選択 / モーダル操作
 // ==============================
 
+// 指定店舗を中心に来るように地図をズーム・パンする。
 function focusShopOnMap(shopId) {
 	const shop = shops.find((s) => String(s.id) === String(shopId));
 	if (!shop) return;
@@ -829,6 +877,7 @@ function focusShopOnMap(shopId) {
 	}
 }
 
+// 店舗を選択状態にする。ピンと店舗カードの選択表示を更新する。
 function selectShop(shopId) {
 	selectedShopId = shopId;
 	renderPins();
@@ -843,6 +892,8 @@ function selectShop(shopId) {
 	}
 }
 
+// 店舗詳細モーダルを開く。
+// 訪問済み店舗の場合は登録フォームを非表示にする。
 function openShopModal(shopId) {
 	const shop = shops.find((s) => s.id === shopId);
 	if (!shop) return;
@@ -859,6 +910,14 @@ function openShopModal(shopId) {
 
 	modal.classList.remove("hidden");
 }
+
+function closeShopModal() {
+	modal.classList.add("hidden");
+}
+
+// ==============================
+// 8. イベント登録 - メニュー / モーダル
+// ==============================
 
 menuButton.addEventListener("click", () => {
 	menuModal.classList.remove("hidden");
@@ -947,6 +1006,40 @@ completeConquestModal.addEventListener("click", (event) => {
 	}
 });
 
+openMemberRecordModal.addEventListener("click", () => {
+	menuModal.classList.add("hidden");
+	renderMemberRecords();
+	memberRecordModal.classList.remove("hidden");
+});
+
+closeMemberRecordModal.addEventListener("click", () => {
+	memberRecordModal.classList.add("hidden");
+});
+
+openConquestProgressModal.addEventListener("click", () => {
+	menuModal.classList.add("hidden");
+	renderConquestProgress();
+	conquestProgressModal.classList.remove("hidden");
+});
+
+closeConquestProgressModal.addEventListener("click", () => {
+	conquestProgressModal.classList.add("hidden");
+});
+
+closeModal.addEventListener("click", closeShopModal);
+
+modal.addEventListener("click", (event) => {
+	if (event.target === modal) {
+		closeShopModal();
+	}
+});
+
+// ==============================
+// 9. イベント登録 - 管理者機能
+// ==============================
+
+// 座標取得モードのON/OFF。
+// ONの場合、地図クリックで選択店舗のx/y座標を更新する。
 toggleCoordinateModeButton.addEventListener("click", () => {
 	isCoordinateMode = !isCoordinateMode;
 
@@ -957,14 +1050,8 @@ toggleCoordinateModeButton.addEventListener("click", () => {
 	mapWrapper.classList.toggle("coordinate-mode", isCoordinateMode);
 });
 
-visitorNameInput.addEventListener("change", () => {
-	const selectedMember = memberMap[String(visitorNameInput.value)];
-
-	if (!selectedMember || !visitorStatusInput) return;
-
-	visitorStatusInput.value = selectedMember.status || "普通";
-});
-
+// 地図クリックによる店舗座標更新。
+// ズーム・パン状態を考慮して、クリック位置を元画像上のパーセント座標に変換する。
 mapWrapper.addEventListener("click", async (event) => {
 	if (hasMapMoved) {
 		hasMapMoved = false;
@@ -1056,49 +1143,83 @@ mapWrapper.addEventListener("click", async (event) => {
 	}
 });
 
-closeModal.addEventListener("click", closeShopModal);
+// 店舗座標をDBに保存し、ローカルのshops配列も更新する。
+async function updateShopCoordinate(shopId, x, y) {
+	const { error } = await supabaseClient
+		.from(TABLE_NAME)
+		.update({ x, y })
+		.eq("id", shopId);
 
-modal.addEventListener("click", (event) => {
-	if (event.target === modal) {
-		closeShopModal();
+	if (error) throw error;
+
+	shops = shops.map((shop) =>
+		String(shop.id) === String(shopId)
+			? { ...shop, x, y }
+			: shop
+	);
+}
+
+// 管理者モーダルから新規店舗を追加する。
+// 初期座標は地図中央付近の x:50, y:50 にして、あとで座標取得モードで調整する。
+adminAddShopButton.addEventListener("click", async () => {
+	const shopName = adminNewShopName.value.trim();
+	const areaId = adminNewShopArea.value;
+
+	if (!shopName || !areaId) {
+		adminAddShopStatus.textContent = "店舗名とエリアを入力してください";
+		adminAddShopStatus.className = "admin-status error";
+		return;
+	}
+
+	adminAddShopStatus.textContent = "店舗を追加中...";
+	adminAddShopStatus.className = "admin-status";
+
+	try {
+		const { error } = await supabaseClient
+			.from(TABLE_NAME)
+			.insert({
+				shop_name: shopName,
+				area_id: Number(areaId),
+				status: "unvisited",
+				x: 50,
+				y: 50
+			});
+
+		if (error) throw error;
+
+		adminNewShopName.value = "";
+		adminNewShopArea.value = "";
+
+		await loadShops();
+
+		renderPins();
+		renderShopList();
+		renderAdminShopSelect();
+
+		adminAddShopStatus.textContent = "店舗を追加しました。座標は地図クリックで調整してください";
+		adminAddShopStatus.className = "admin-status success";
+	} catch (error) {
+		console.error(error);
+		adminAddShopStatus.textContent = "店舗追加に失敗しました";
+		adminAddShopStatus.className = "admin-status error";
 	}
 });
 
-function closeShopModal() {
-	modal.classList.add("hidden");
-}
-
-function getDistance(touch1, touch2) {
-	const dx = touch1.clientX - touch2.clientX;
-	const dy = touch1.clientY - touch2.clientY;
-
-	return Math.sqrt(dx * dx + dy * dy);
-}
-
-openMemberRecordModal.addEventListener("click", () => {
-	menuModal.classList.add("hidden");
-	renderMemberRecords();
-	memberRecordModal.classList.remove("hidden");
-});
-
-closeMemberRecordModal.addEventListener("click", () => {
-	memberRecordModal.classList.add("hidden");
-});
-
-openConquestProgressModal.addEventListener("click", () => {
-	menuModal.classList.add("hidden");
-	renderConquestProgress();
-	conquestProgressModal.classList.remove("hidden");
-});
-
-closeConquestProgressModal.addEventListener("click", () => {
-	conquestProgressModal.classList.add("hidden");
-});
-
 // ==============================
-// 登録処理
+// 10. イベント登録 - 訪問登録 / メンバー
 // ==============================
 
+// メンバー選択時、そのメンバーの現在ステータスをフォームに反映する。
+visitorNameInput.addEventListener("change", () => {
+	const selectedMember = memberMap[String(visitorNameInput.value)];
+
+	if (!selectedMember || !visitorStatusInput) return;
+
+	visitorStatusInput.value = selectedMember.status || "普通";
+});
+
+// 訪問登録処理。
+// 写真アップロード → 店舗更新 → メンバー更新 → ログ登録 → 制覇判定 → 再描画の順で処理する。
 visitForm.addEventListener("submit", async (event) => {
 	event.preventDefault();
 
@@ -1127,6 +1248,7 @@ visitForm.addEventListener("submit", async (event) => {
 
 	const loggedAt = new Date().toISOString();
 
+	// 制覇判定用に、登録前の状態を保持しておく。
 	const beforeShops = structuredClone(shops);
 
 	try {
@@ -1223,6 +1345,7 @@ visitForm.addEventListener("submit", async (event) => {
 	}
 });
 
+// Supabase Storageへ写真をアップロードし、公開URLを返す。
 async function uploadPhoto(shopId, visitorName, file) {
 	const fileExt = file.name.split(".").pop().toLowerCase();
 	const fileName = `${shopId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
@@ -1243,6 +1366,7 @@ async function uploadPhoto(shopId, visitorName, file) {
 	return data.publicUrl;
 }
 
+// メンバー追加処理。
 memberForm.addEventListener("submit", async (event) => {
 	event.preventDefault();
 
@@ -1258,7 +1382,7 @@ memberForm.addEventListener("submit", async (event) => {
 			.from(MEMBER_TABLE_NAME)
 			.insert({
 				name,
-				status: '普通'
+				status: "普通"
 			});
 
 		if (error) throw error;
@@ -1276,6 +1400,8 @@ memberForm.addEventListener("submit", async (event) => {
 	}
 });
 
+// メンバーの満腹ステータスを更新する。
+// 現在はJS側に関数を残している。HTML側で更新ボタンから呼ぶ場合に使用。
 async function updateMemberStatus(memberId, status) {
 	if (!memberId) return;
 
@@ -1285,6 +1411,7 @@ async function updateMemberStatus(memberId, status) {
 			alert("不正なステータスです");
 			return;
 		}
+
 		const { error } = await supabaseClient
 			.from(MEMBER_TABLE_NAME)
 			.update({ status })
@@ -1306,203 +1433,194 @@ async function updateMemberStatus(memberId, status) {
 	}
 }
 
-function getStatusLabel(status) {
-	return MEMBER_STATUSES.find((item) => item.value === status)?.label || status || "🙂 普通";
-}
+openAdminModal.addEventListener("click", () => {
+	menuModal.classList.add("hidden");
+	renderAdminShopSelect();
+	renderAdminAreaSelect();
+	adminUpdateStatus.textContent = "";
+	adminUpdateStatus.className = "admin-status";
+	adminModal.classList.remove("hidden");
+});
 
-function countMemberStatuses(targetMembers) {
-	return targetMembers.reduce((counts, member) => {
-		const status = member.status || "普通";
-		counts[status] = (counts[status] || 0) + 1;
-		return counts;
-	}, {});
-}
+closeAdminModal.addEventListener("click", () => {
+	adminModal.classList.add("hidden");
+});
 
-function formatStatusCounts(statusCounts) {
-	return MEMBER_STATUSES
-		.map((item) => {
-			const count = Number(statusCounts[item.value] || 0);
-			return count > 0 ? `${item.label}${count}` : "";
-		})
-		.filter(Boolean)
-		.join(" ");
-}
+closeAreaConquestModal.addEventListener("click", () => {
+	areaConquestModal.classList.add("hidden");
+});
 
-function isAreaConquered(areaId, targetShops) {
-	const areaShops = targetShops.filter(
-		(shop) => String(shop.area_id) === String(areaId)
-	);
+areaConquestModal.addEventListener("click", (event) => {
+	if (event.target === areaConquestModal) {
+		areaConquestModal.classList.add("hidden");
+	}
+});
 
-	return (
-		areaShops.length > 0 &&
-		areaShops.every((shop) => shop.status === "visited")
-	);
-}
+closeCompleteConquestModal.addEventListener("click", () => {
+	completeConquestModal.classList.add("hidden");
+});
 
-function buildUpdatedMembers(visitorId, visitorStatus) {
-	return members.map((member) =>
-		String(member.id) === String(visitorId)
-			? { ...member, status: visitorStatus }
-			: member
-	);
-}
+completeConquestModal.addEventListener("click", (event) => {
+	if (event.target === completeConquestModal) {
+		completeConquestModal.classList.add("hidden");
+	}
+});
 
-function buildUpdatedShopsAfterVisit(shopId, visitorId, visitorStatus, comment, photoUrl, loggedAt) {
-	return shops.map((shop) =>
+openMemberRecordModal.addEventListener("click", () => {
+	menuModal.classList.add("hidden");
+	renderMemberRecords();
+	memberRecordModal.classList.remove("hidden");
+});
+
+closeMemberRecordModal.addEventListener("click", () => {
+	memberRecordModal.classList.add("hidden");
+});
+
+openConquestProgressModal.addEventListener("click", () => {
+	menuModal.classList.add("hidden");
+	renderConquestProgress();
+	conquestProgressModal.classList.remove("hidden");
+});
+
+closeConquestProgressModal.addEventListener("click", () => {
+	conquestProgressModal.classList.add("hidden");
+});
+
+closeModal.addEventListener("click", closeShopModal);
+
+modal.addEventListener("click", (event) => {
+	if (event.target === modal) {
+		closeShopModal();
+	}
+});
+
+// ==============================
+// 9. イベント登録 - 管理者機能
+// ==============================
+
+// 座標取得モードのON/OFF。
+// ONの場合、地図クリックで選択店舗のx/y座標を更新する。
+toggleCoordinateModeButton.addEventListener("click", () => {
+	isCoordinateMode = !isCoordinateMode;
+
+	toggleCoordinateModeButton.textContent = isCoordinateMode
+		? "座標取得モード：ON"
+		: "座標取得モード：OFF";
+
+	mapWrapper.classList.toggle("coordinate-mode", isCoordinateMode);
+});
+
+// 地図クリックによる店舗座標更新。
+// ズーム・パン状態を考慮して、クリック位置を元画像上のパーセント座標に変換する。
+mapWrapper.addEventListener("click", async (event) => {
+	if (hasMapMoved) {
+		hasMapMoved = false;
+		return;
+	}
+
+	if (isMapDragging) {
+		return;
+	}
+
+	if (!isCoordinateMode) {
+		return;
+	}
+
+	if (event.target.closest(".pin")) {
+		return;
+	}
+
+	const selectedAdminShopId = adminShopSelect?.value;
+	if (!selectedAdminShopId) {
+		adminUpdateStatus.textContent = "店舗を選択してください";
+		adminUpdateStatus.className = "admin-status error";
+		return;
+	}
+
+	const rect = mapWrapper.getBoundingClientRect();
+
+	const wrapperX = event.clientX - rect.left - mapPanX;
+	const wrapperY = event.clientY - rect.top - mapPanY;
+
+	const centerX = rect.width / 2;
+	const centerY = rect.height / 2;
+
+	const imageX = centerX + (wrapperX - centerX) / mapZoom;
+	const imageY = centerY + (wrapperY - centerY) / mapZoom;
+
+	const x = (imageX / rect.width) * 100;
+	const y = (imageY / rect.height) * 100;
+
+	const roundedX = Number(x.toFixed(1));
+	const roundedY = Number(y.toFixed(1));
+
+	adminLastCoordinate.textContent = `座標：x=${roundedX}, y=${roundedY}`;
+	adminSqlCoordinate.textContent = `SQL：${roundedX}, ${roundedY}`;
+	adminUpdateStatus.textContent = "座標を更新中...";
+	adminUpdateStatus.className = "admin-status";
+
+	console.log("地図クリック座標:", {
+		shopId: selectedAdminShopId,
+		x: roundedX,
+		y: roundedY
+	});
+
+	try {
+		await updateShopCoordinate(selectedAdminShopId, roundedX, roundedY);
+
+		selectedShopId = String(selectedAdminShopId);
+		renderPins();
+		renderShopList();
+		renderAdminShopSelect();
+
+		const selectedCard = document.querySelector(".shop-card.selected");
+		if (selectedCard) {
+			selectedCard.scrollIntoView({
+				behavior: "smooth",
+				block: "center"
+			});
+		}
+
+		await navigator.clipboard.writeText(`${roundedX}, ${roundedY}`);
+
+		adminUpdateStatus.textContent = "座標を更新しました";
+		adminUpdateStatus.className = "admin-status success";
+		adminCopyStatus.textContent = "クリップボードにコピーしました";
+
+		// 管理者モーダルを再表示してプルダウンにフォーカス
+		adminModal.classList.remove("hidden");
+		try {
+			adminShopSelect?.focus();
+		} catch (e) {}
+
+		setTimeout(() => {
+			adminCopyStatus.textContent = "";
+		}, 1600);
+	} catch (error) {
+		console.error(error);
+		adminUpdateStatus.textContent = "座標更新に失敗しました";
+		adminUpdateStatus.className = "admin-status error";
+	}
+});
+
+// 店舗座標をDBに保存し、ローカルのshops配列も更新する。
+async function updateShopCoordinate(shopId, x, y) {
+	const { error } = await supabaseClient
+		.from(TABLE_NAME)
+		.update({ x, y })
+		.eq("id", shopId);
+
+	if (error) throw error;
+
+	shops = shops.map((shop) =>
 		String(shop.id) === String(shopId)
-			? {
-				...shop,
-				status: "visited",
-				visitor_id: visitorId,
-				visitor_status: visitorStatus,
-				comment,
-				photo_url: photoUrl,
-				created_at: loggedAt
-			}
+			? { ...shop, x, y }
 			: shop
 	);
 }
 
-async function insertVisitLog(shop, visitorId, visitorStatus, loggedAt) {
-	const member = memberMap[String(visitorId)];
-
-	const { error } = await supabaseClient
-		.from(LOG_TABLE_NAME)
-		.insert({
-			log_type: "visit",
-			shop_id: shop.id,
-			shop_name: shop.shop_name,
-			area_id: shop.area_id,
-			area_name: shop.area_name,
-			member_id: visitorId,
-			member_name: member?.name || "",
-			visitor_status: visitorStatus,
-			logged_at: loggedAt
-		});
-
-	if (error) throw error;
-}
-
-async function insertConquestLogIfNeeded(areaId, updatedShops, updatedMembers, loggedAt) {
-	const beforeConquered = isAreaConquered(areaId, shops);
-	const afterConquered = isAreaConquered(areaId, updatedShops);
-
-	if (beforeConquered || !afterConquered) {
-		return;
-	}
-
-	const area = areaMap[String(areaId)];
-	const areaName =
-		area?.name ||
-		updatedShops.find((shop) => String(shop.area_id) === String(areaId))?.area_name ||
-		"未分類";
-
-	const statusCounts = countMemberStatuses(updatedMembers);
-
-	const { error } = await supabaseClient
-		.from(LOG_TABLE_NAME)
-		.insert({
-			log_type: "area_conquest",
-			area_id: areaId,
-			area_name: areaName,
-			status_counts: statusCounts,
-			logged_at: loggedAt
-		});
-
-	if (error && error.code !== "23505") {
-		throw error;
-	}
-}
-
-async function insertFullConquestLogIfNeeded(beforeShops, updatedShops, updatedMembers, loggedAt) {
-	const beforeComplete = isFullyConquered(beforeShops);
-	const afterComplete = isFullyConquered(updatedShops);
-
-	if (beforeComplete || !afterComplete) {
-		return;
-	}
-
-	const statusCounts = countMemberStatuses(updatedMembers);
-
-	const { error } = await supabaseClient
-		.from(LOG_TABLE_NAME)
-		.insert({
-			log_type: "full_conquest",
-			area_name: "全エリア",
-			status_counts: statusCounts,
-			logged_at: loggedAt
-		});
-
-	if (error && error.code !== "23505") {
-		throw error;
-	}
-}
-
-function isFullyConquered(targetShops) {
-	return (
-		targetShops.length > 0 &&
-		targetShops.every((shop) => shop.status === "visited")
-	);
-}
-
-function showAreaConquestModalIfNeeded(areaId, beforeShops, afterShops) {
-	const beforeConquered = isAreaConquered(areaId, beforeShops);
-	const afterConquered = isAreaConquered(areaId, afterShops);
-
-	if (beforeConquered || !afterConquered) {
-		return;
-	}
-
-	const areaName =
-		areaMap[String(areaId)]?.name ||
-		afterShops.find((shop) => String(shop.area_id) === String(areaId))?.area_name ||
-		"エリア";
-
-	areaConquestSubtitle.textContent = `${areaName} 制覇達成！`;
-	areaConquestModal.classList.remove("hidden");
-}
-
-function showCompleteConquestModalIfNeeded(beforeShops, afterShops) {
-	const beforeComplete = isFullyConquered(beforeShops);
-	const afterComplete = isFullyConquered(afterShops);
-
-	if (!beforeComplete && afterComplete) {
-		completeConquestModal.classList.remove("hidden");
-	}
-}
-
-function formatShortDate(value) {
-	if (!value) return "";
-
-	const date = new Date(value);
-
-	const month = String(date.getMonth() + 1).padStart(2, "0");
-	const day = String(date.getDate()).padStart(2, "0");
-	const hours = String(date.getHours()).padStart(2, "0");
-	const minutes = String(date.getMinutes()).padStart(2, "0");
-
-	return `${month}/${day} ${hours}:${minutes}`;
-}
-
-function renderAdminAreaSelect() {
-	if (!adminNewShopArea) return;
-
-	adminNewShopArea.innerHTML = `<option value="">エリアを選択</option>`;
-
-	areas.forEach((area) => {
-		const option = document.createElement("option");
-		option.value = area.id;
-
-		// areas.name ならこっち
-		option.textContent = area.name;
-
-		// もしカラム名が areas._name なら上を消してこっち
-		// option.textContent = area._name;
-
-		adminNewShopArea.appendChild(option);
-	});
-}
-
+// 管理者モーダルから新規店舗を追加する。
+// 初期座標は地図中央付近の x:50, y:50 にして、あとで座標取得モードで調整する。
 adminAddShopButton.addEventListener("click", async () => {
 	const shopName = adminNewShopName.value.trim();
 	const areaId = adminNewShopArea.value;
@@ -1520,11 +1638,11 @@ adminAddShopButton.addEventListener("click", async () => {
 		const { error } = await supabaseClient
 			.from(TABLE_NAME)
 			.insert({
-					shop_name: shopName,
-					area_id: Number(areaId),
-					status: "unvisited",
-					x: 50,
-					y: 50
+				shop_name: shopName,
+				area_id: Number(areaId),
+				status: "unvisited",
+				x: 50,
+				y: 50
 			});
 
 		if (error) throw error;
@@ -1547,128 +1665,230 @@ adminAddShopButton.addEventListener("click", async () => {
 	}
 });
 
-function clampMapPan() {
-	const rect = mapWrapper.getBoundingClientRect();
+// ==============================
+// 10. イベント登録 - 訪問登録 / メンバー
+// ==============================
 
-	const maxPanX = ((mapZoom - 1) * rect.width) / 2;
-	const maxPanY = ((mapZoom - 1) * rect.height) / 2;
+// メンバー選択時、そのメンバーの現在ステータスをフォームに反映する。
+visitorNameInput.addEventListener("change", () => {
+	const selectedMember = memberMap[String(visitorNameInput.value)];
 
-	mapPanX = Math.min(Math.max(mapPanX, -maxPanX), maxPanX);
-	mapPanY = Math.min(Math.max(mapPanY, -maxPanY), maxPanY);
-}
+	if (!selectedMember || !visitorStatusInput) return;
 
-function updateMapZoom() {
-	clampMapPan();
+	visitorStatusInput.value = selectedMember.status || "普通";
+});
 
-	mapImage.style.transform = `translate(${mapPanX}px, ${mapPanY}px) scale(${mapZoom})`;
-	renderPins();
-}
-
-mapWrapper.addEventListener("wheel", (event) => {
+// 訪問登録処理。
+// 写真アップロード → 店舗更新 → メンバー更新 → ログ登録 → 制覇判定 → 再描画の順で処理する。
+visitForm.addEventListener("submit", async (event) => {
 	event.preventDefault();
 
-	if (event.deltaY < 0) {
-		mapZoom += 0.1;
-	} else {
-		mapZoom -= 0.1;
+	if (!selectedShopId) return;
+
+	const visitorId = visitorNameInput.value;
+	const visitorStatus = visitorStatusInput.value;
+	const comment = commentInput.value.trim();
+	const file = photoInput.files[0];
+
+	if (!visitorId || !visitorStatus || !file) {
+		visitError.textContent = "メンバー、状態、写真を選択してください。";
+		visitError.classList.remove("hidden");
+		return;
 	}
 
-	mapZoom = Math.min(Math.max(mapZoom, 1), 3);
+	const targetShop = shops.find((shop) => String(shop.id) === String(selectedShopId));
 
-	updateMapZoom();
-});
-
-mapWrapper.addEventListener("pointerdown", (event) => {
-	if (event.pointerType !== "touch" && mapZoom <= 1) return;
-	if (event.target.closest(".pin")) return;
-
-	event.preventDefault();
-
-	isMapDragging = true;
-	hasMapMoved = false;
-
-	dragStartX = event.clientX;
-	dragStartY = event.clientY;
-	startPanX = mapPanX;
-	startPanY = mapPanY;
-
-	mapWrapper.classList.add("dragging");
-	mapWrapper.setPointerCapture(event.pointerId);
-});
-
-mapWrapper.addEventListener("pointermove", (event) => {
-	if (!isMapDragging) return;
-
-	const dx = event.clientX - dragStartX;
-	const dy = event.clientY - dragStartY;
-
-	if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-		hasMapMoved = true;
+	if (!targetShop) {
+		alert("店舗情報が見つかりません");
+		return;
 	}
 
-	mapPanX = startPanX + dx;
-	mapPanY = startPanY + dy;
+	visitError.textContent = "";
+	visitError.classList.add("hidden");
 
-	updateMapZoom();
-});
+	const loggedAt = new Date().toISOString();
 
-mapWrapper.addEventListener("pointerup", (event) => {
-	isMapDragging = false;
-	mapWrapper.classList.remove("dragging");
+	// 制覇判定用に、登録前の状態を保持しておく。
+	const beforeShops = structuredClone(shops);
 
 	try {
-		mapWrapper.releasePointerCapture(event.pointerId);
-	} catch (e) {}
+		const photoUrl = await uploadPhoto(selectedShopId, visitorId, file);
+
+		const updatedShops = buildUpdatedShopsAfterVisit(
+			selectedShopId,
+			visitorId,
+			visitorStatus,
+			comment,
+			photoUrl,
+			loggedAt
+		);
+
+		const updatedMembers = buildUpdatedMembers(visitorId, visitorStatus);
+
+		const { error } = await supabaseClient
+			.from(TABLE_NAME)
+			.update({
+				status: "visited",
+				visitor_id: visitorId,
+				visitor_status: visitorStatus,
+				comment,
+				photo_url: photoUrl,
+				created_at: loggedAt
+			})
+			.eq("id", selectedShopId);
+
+		if (error) throw error;
+
+		const { error: memberUpdateError } = await supabaseClient
+			.from(MEMBER_TABLE_NAME)
+			.update({
+				status: visitorStatus
+			})
+			.eq("id", visitorId);
+
+		if (memberUpdateError) throw memberUpdateError;
+
+		await insertVisitLog(targetShop, visitorId, visitorStatus, loggedAt);
+
+		await insertConquestLogIfNeeded(
+			targetShop.area_id,
+			updatedShops,
+			updatedMembers,
+			loggedAt
+		);
+
+		await insertFullConquestLogIfNeeded(
+			beforeShops,
+			updatedShops,
+			updatedMembers,
+			loggedAt
+		);
+
+		photoInput.value = "";
+
+		await loadShops();
+		await loadMembers();
+		await loadLogs();
+
+		renderPins();
+		renderShopList();
+		renderMemberSelect();
+		renderMemberList();
+
+		const updatedShop = shops.find(
+			(s) => String(s.id) === String(selectedShopId)
+		);
+
+		renderVisitHistory(updatedShop);
+
+		showAreaConquestModalIfNeeded(
+			targetShop.area_id,
+			beforeShops,
+			updatedShops
+		);
+
+		showCompleteConquestModalIfNeeded(
+			beforeShops,
+			updatedShops
+		);
+
+		if (updatedShop.status === "visited") {
+			visitForm.classList.add("hidden");
+		} else {
+			visitForm.classList.remove("hidden");
+		}
+
+		alert("登録しました");
+	} catch (error) {
+		console.error(error);
+		alert("登録に失敗しました");
+	}
 });
 
-mapWrapper.addEventListener("pointercancel", () => {
-	isMapDragging = false;
-	mapWrapper.classList.remove("dragging");
-});
+// Supabase Storageへ写真をアップロードし、公開URLを返す。
+async function uploadPhoto(shopId, visitorName, file) {
+	const fileExt = file.name.split(".").pop().toLowerCase();
+	const fileName = `${shopId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
 
-mapWrapper.addEventListener("touchstart", (event) => {
-	if (event.touches.length !== 2) return;
+	const { error } = await supabaseClient.storage
+		.from(STORAGE_BUCKET)
+		.upload(fileName, file, {
+			cacheControl: "3600",
+			upsert: false
+		});
 
-	pinchStartDistance = getDistance(
-		event.touches[0],
-		event.touches[1]
-	);
+	if (error) throw error;
 
-	pinchStartZoom = mapZoom;
-});
+	const { data } = supabaseClient.storage
+		.from(STORAGE_BUCKET)
+		.getPublicUrl(fileName);
 
-mapWrapper.addEventListener("touchmove", (event) => {
-	if (event.touches.length !== 2) return;
+	return data.publicUrl;
+}
 
+// メンバー追加処理。
+memberForm.addEventListener("submit", async (event) => {
 	event.preventDefault();
 
-	const currentDistance = getDistance(
-		event.touches[0],
-		event.touches[1]
-	);
+	const name = memberNameInput.value.trim();
 
-	const scale = currentDistance / pinchStartDistance;
+	if (!name) {
+		alert("メンバー名を入力してください");
+		return;
+	}
 
-	mapZoom = pinchStartZoom * scale;
+	try {
+		const { error } = await supabaseClient
+			.from(MEMBER_TABLE_NAME)
+			.insert({
+				name,
+				status: "普通"
+			});
 
-	mapZoom = Math.min(Math.max(mapZoom, 1), 3);
+		if (error) throw error;
 
-	updateMapZoom();
+		memberNameInput.value = "";
+
+		await loadMembers();
+		renderMemberSelect();
+		renderMemberList();
+
+		alert("メンバーを追加しました");
+	} catch (error) {
+		console.error(error);
+		alert("メンバー追加に失敗しました。同じ名前が既にあるかもしれません。");
+	}
 });
 
-mapWrapper.addEventListener("touchend", () => {
-	pinchStartDistance = null;
-});
+// メンバーの満腹ステータスを更新する。
+// 現在はJS側に関数を残している。HTML側で更新ボタンから呼ぶ場合に使用。
+async function updateMemberStatus(memberId, status) {
+	if (!memberId) return;
 
-// ==============================
-// utility
-// ==============================
+	try {
+		const allowed = MEMBER_STATUSES.map((item) => item.value);
+		if (!allowed.includes(status)) {
+			alert("不正なステータスです");
+			return;
+		}
 
-function escapeHtml(value) {
-	return String(value ?? "")
-		.replaceAll("&", "&amp;")
-		.replaceAll("<", "&lt;")
-		.replaceAll(">", "&gt;")
-		.replaceAll('"', "&quot;")
-		.replaceAll("'", "&#039;");
+		const { error } = await supabaseClient
+			.from(MEMBER_TABLE_NAME)
+			.update({ status })
+			.eq("id", memberId);
+
+		if (error) {
+			console.error(error);
+			alert("メンバーのステータス更新に失敗しました。"
+				+ "データベースにstatus列が存在するか確認してください。");
+			return;
+		}
+
+		await loadMembers();
+		renderMemberList();
+		renderMemberSelect();
+	} catch (error) {
+		console.error(error);
+		alert("メンバーのステータス更新に失敗しました。");
+	}
 }
