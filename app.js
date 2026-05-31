@@ -281,7 +281,7 @@ function renderCompletionStatus() {
 	const visitedShops = shops.filter((shop) => shop.status === "visited").length;
 	const percent = totalShops === 0 ? 0 : Math.round((visitedShops / totalShops) * 100);
 
-	completionStatus.textContent = `訪問済：\n${visitedShops}/${totalShops} 店舗\n（${percent}%）`;
+	completionStatus.textContent = `訪問済：\n${visitedShops}/${totalShops} 店舗\n(${percent}%)`;
 }
 
 function renderAdminShopSelect() {

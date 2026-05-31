@@ -338,7 +338,7 @@ main {
 	transform: translate(340px, -50%);
 	height: auto;
 	display: flex;
-	align-items: left;
+	align-items: center;
 	text-align: left;
 	justify-content: center;
 	padding: 0;
@@ -348,7 +348,6 @@ main {
 	font-size: 13px;
 	font-weight: 700;
 	color: rgba(255, 255, 255, 0.95);
-	text-align: center;
 	white-space: nowrap;
 }
 
@@ -481,6 +480,8 @@ main {
 	background: linear-gradient(180deg, #ffffff, #fff8f0);
 	box-shadow: 8px 0 24px rgba(0, 0, 0, 0.22);
 	border-radius: 0 24px 24px 0;
+	display: flex;
+	flex-direction: column;
 }
 
 .menu-content h2 {
@@ -502,6 +503,16 @@ main {
 	color: #333;
 	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
 	cursor: pointer;
+}
+
+.admin-menu-area {
+	margin-top: auto;
+	padding-top: 20px;
+	border-top: 1px solid #ddd;
+}
+
+.admin-button {
+	margin-top: 0;
 }
 
 .menu-item-button::before {
