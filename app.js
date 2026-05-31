@@ -218,23 +218,30 @@ function renderPins() {
 
 		pin.className = `pin ${shop.status === "visited" ? "visited" : "unvisited"}`;
 
+		const pinAnchor = document.createElement("button");
+		pinAnchor.className = "pin-anchor";
+
+		const pin = document.createElement("span");
+		pin.className = `pin ${shop.status === "visited" ? "visited" : "unvisited"}`;
+
 		if (String(shop.id) === String(selectedShopId)) {
 			pin.classList.add("selected");
 		}
 
-	const displayX = 50 + (shop.x - 50) * mapZoom;
-	const displayY = 50 + (shop.y - 50) * mapZoom;
+		const displayX = 50 + (shop.x - 50) * mapZoom;
+		const displayY = 50 + (shop.y - 50) * mapZoom;
 
-	pin.style.left = `calc(${displayX}% + ${mapPanX}px)`;
-	pin.style.top = `calc(${displayY}% + ${mapPanY}px)`;
+		pinAnchor.style.left = `calc(${displayX}% + ${mapPanX}px)`;
+		pinAnchor.style.top = `calc(${displayY}% + ${mapPanY}px)`;
 
-		pin.setAttribute("aria-label", shop.shop_name);
+		pinAnchor.setAttribute("aria-label", shop.shop_name);
 
-		pin.addEventListener("click", () => {
+		pinAnchor.addEventListener("click", () => {
 			selectShop(shop.id);
 		});
 
-		pinLayer.appendChild(pin);
+		pinAnchor.appendChild(pin);
+		pinLayer.appendChild(pinAnchor);
 	});
 }
 

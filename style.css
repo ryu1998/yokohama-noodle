@@ -95,17 +95,27 @@ main {
 	pointer-events: auto;
 }
 
+.pin-anchor {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+}
+
 .pin {
 	position: absolute;
+	left: 0;
+	top: 0;
+
 	width: 22px;
 	height: 22px;
 
-	cursor: pointer;
-
 	border-radius: 50% 50% 50% 0;
-
-	transform-origin: center bottom;
 	transform: translate(-50%, -100%) rotate(-45deg);
+	transform-origin: center center;
 
 	border: 2px solid rgba(255,255,255,0.9);
 
