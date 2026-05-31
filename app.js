@@ -82,6 +82,7 @@ let dragStartX = 0;
 let dragStartY = 0;
 let startPanX = 0;
 let startPanY = 0;
+let collapsedAreaIds = new Set();
 
 // ==============================
 // 初期化
@@ -125,8 +126,7 @@ async function loadShops() {
 				name
 			)
 		`)
-		.order("area_id", { ascending: true })
-		.order("shop_name", { ascending: true });
+		.order("area_id", { ascending: true });
 
 	if (error) {
 		console.error(error);
@@ -134,10 +134,24 @@ async function loadShops() {
 		return;
 	}
 
-	shops = (data || []).map((shop) => ({
-		...shop,
-		area_name: shop.areas?.name || "未分類"
-	}));
+	shops = (data || [])
+		.map((shop) => ({
+			...shop,
+			area_name: shop.areas?.name || "未分類"
+		}))
+		.sort((a, b) => {
+			const areaA = Number(a.area_id ?? 999999);
+			const areaB = Number(b.area_id ?? 999999);
+
+			if (areaA !== areaB) {
+				return areaA - areaB;
+			}
+
+			const scoreA = Number(a.x ?? 0) ** 2 + Number(a.y ?? 0) ** 2;
+			const scoreB = Number(b.x ?? 0) ** 2 + Number(b.y ?? 0) ** 2;
+
+			return scoreB - scoreA;
+		});
 
 	console.log("shops with areas:", shops);
 }
@@ -221,6 +235,7 @@ function renderShopList() {
 
 		if (!groups[areaId]) {
 			groups[areaId] = {
+				id: areaId,
 				name: areaName,
 				shops: []
 			};
@@ -234,9 +249,34 @@ function renderShopList() {
 		const areaGroup = document.createElement("div");
 		areaGroup.className = "area-group";
 
-		const areaTitle = document.createElement("h3");
-		areaTitle.className = "area-title";
-		areaTitle.textContent = group.name;
+		const isCollapsed = collapsedAreaIds.has(String(group.id));
+
+		const areaTitle = document.createElement("button");
+		areaTitle.type = "button";
+		areaTitle.className = `area-title-button ${isCollapsed ? "collapsed" : ""}`;
+		areaTitle.innerHTML = `
+			<span>${escapeHtml(group.name)}</span>
+			<span class="area-toggle-icon">${isCollapsed ? "▶" : "▼"}</span>
+		`;
+
+		const shopContainer = document.createElement("div");
+		shopContainer.className = `area-shop-container ${isCollapsed ? "collapsed" : ""}`;
+
+		areaTitle.addEventListener("click", () => {
+			const areaId = String(group.id);
+
+			if (collapsedAreaIds.has(areaId)) {
+				collapsedAreaIds.delete(areaId);
+				areaTitle.classList.remove("collapsed");
+				shopContainer.classList.remove("collapsed");
+				areaTitle.querySelector(".area-toggle-icon").textContent = "▼";
+			} else {
+				collapsedAreaIds.add(areaId);
+				areaTitle.classList.add("collapsed");
+				shopContainer.classList.add("collapsed");
+				areaTitle.querySelector(".area-toggle-icon").textContent = "▼";
+			}
+		});
 
 		areaGroup.appendChild(areaTitle);
 
@@ -301,9 +341,10 @@ function renderShopList() {
 				openShopModal(shop.id);
 			});
 
-			areaGroup.appendChild(card);
+			shopContainer.appendChild(card);
 		});
 
+		areaGroup.appendChild(shopContainer);
 		shopList.appendChild(areaGroup);
 	});
 
