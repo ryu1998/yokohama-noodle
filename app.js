@@ -215,7 +215,8 @@ async function loadLogs() {
 	const { data, error } = await supabaseClient
 		.from(LOG_TABLE_NAME)
 		.select("*")
-		.order("logged_at", { ascending: false });
+		.order("logged_at", { ascending: false })
+		.order("id", { ascending: true });
 
 	if (error) {
 		console.error(error);
