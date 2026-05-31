@@ -118,7 +118,13 @@ async function init() {
 async function loadShops() {
 	const { data, error } = await supabaseClient
 		.from(TABLE_NAME)
-		.select("*")
+		.select(`
+			*,
+			areas (
+				id,
+				name
+			)
+		`)
 		.order("area_id", { ascending: true })
 		.order("shop_name", { ascending: true });
 
@@ -128,23 +134,14 @@ async function loadShops() {
 		return;
 	}
 
-	const rawShops = data || [];
-
-	shops = rawShops.map((shop) => {
-		const area = areaMap[String(shop.area_id)];
-
-		console.log({
-			shop_name: shop.shop_name,
-			shop_area_id: shop.area_id,
-			areaMap,
-			area
-		});
-
+	shops = (data || []).map((shop) => {
 		return {
 			...shop,
-			area_name: area?.name || "未分類"
+			area_name: shop.areas?.name || "未分類"
 		};
 	});
+
+	console.log("shops with areas:", shops);
 }
 
 async function loadMembers() {
