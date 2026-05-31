@@ -68,10 +68,20 @@ const adminNewShopArea = document.getElementById("adminNewShopArea");
 const adminAddShopButton = document.getElementById("adminAddShopButton");
 const adminAddShopStatus = document.getElementById("adminAddShopStatus");
 
+const mapImage = document.querySelector(".map-image");
+
 let shops = [];
 let selectedShopId = null;
 let members = [];
 let isCoordinateMode = false;
+let mapZoom = 1;
+let mapPanX = 0;
+let mapPanY = 0;
+let isMapDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let startPanX = 0;
+let startPanY = 0;
 
 // ==============================
 // 初期化
@@ -191,8 +201,12 @@ function renderPins() {
 			pin.classList.add("selected");
 		}
 
-		pin.style.left = `${shop.x}%`;
-		pin.style.top = `${shop.y}%`;
+	const displayX = 50 + (shop.x - 50) * mapZoom;
+	const displayY = 50 + (shop.y - 50) * mapZoom;
+
+	pin.style.left = `calc(${displayX}% + ${mapPanX}px)`;
+	pin.style.top = `calc(${displayY}% + ${mapPanY}px)`;
+
 		pin.setAttribute("aria-label", shop.shop_name);
 
 		pin.addEventListener("click", () => {
@@ -560,6 +574,10 @@ memberList.addEventListener("click", async (event) => {
 });
 
 mapWrapper.addEventListener("click", async (event) => {
+	if (isMapDragging) {
+		return;
+	}
+
 	if (!isCoordinateMode) {
 		return;
 	}
@@ -577,8 +595,17 @@ mapWrapper.addEventListener("click", async (event) => {
 
 	const rect = mapWrapper.getBoundingClientRect();
 
-	const x = ((event.clientX - rect.left) / rect.width) * 100;
-	const y = ((event.clientY - rect.top) / rect.height) * 100;
+	const wrapperX = event.clientX - rect.left - mapPanX;
+	const wrapperY = event.clientY - rect.top - mapPanY;
+
+	const centerX = rect.width / 2;
+	const centerY = rect.height / 2;
+
+	const imageX = centerX + (wrapperX - centerX) / mapZoom;
+	const imageY = centerY + (wrapperY - centerY) / mapZoom;
+
+	const x = (imageX / rect.width) * 100;
+	const y = (imageY / rect.height) * 100;
 
 	const roundedX = Number(x.toFixed(1));
 	const roundedY = Number(y.toFixed(1));
@@ -858,6 +885,67 @@ adminAddShopButton.addEventListener("click", async () => {
 		adminAddShopStatus.textContent = "店舗追加に失敗しました";
 		adminAddShopStatus.className = "admin-status error";
 	}
+});
+
+function updateMapZoom() {
+	mapImage.style.transform = `translate(${mapPanX}px, ${mapPanY}px) scale(${mapZoom})`;
+	renderPins();
+}
+
+mapWrapper.addEventListener("wheel", (event) => {
+	event.preventDefault();
+
+	if (event.deltaY < 0) {
+		mapZoom += 0.1;
+	} else {
+		mapZoom -= 0.1;
+	}
+
+	mapZoom = Math.min(Math.max(mapZoom, 1), 3);
+
+	updateMapZoom();
+});
+
+mapWrapper.addEventListener("pointerdown", (event) => {
+	if (mapZoom <= 1) return;
+	if (event.target.closest(".pin")) return;
+
+	event.preventDefault();
+
+	isMapDragging = true;
+	dragStartX = event.clientX;
+	dragStartY = event.clientY;
+	startPanX = mapPanX;
+	startPanY = mapPanY;
+
+	mapWrapper.classList.add("dragging");
+	mapWrapper.setPointerCapture(event.pointerId);
+});
+
+mapWrapper.addEventListener("pointermove", (event) => {
+	if (!isMapDragging) return;
+
+	const dx = event.clientX - dragStartX;
+	const dy = event.clientY - dragStartY;
+
+	mapPanX = startPanX + dx;
+	mapPanY = startPanY + dy;
+
+	updateMapZoom();
+});
+
+mapWrapper.addEventListener("pointerup", (event) => {
+	isMapDragging = false;
+	mapWrapper.classList.remove("dragging");
+
+	try {
+		mapWrapper.releasePointerCapture(event.pointerId);
+	} catch (e) {}
+});
+
+mapWrapper.addEventListener("pointercancel", () => {
+	isMapDragging = false;
+	mapWrapper.classList.remove("dragging");
 });
 
 // ==============================
