@@ -8,6 +8,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const TABLE_NAME = "shops";
 const MEMBER_TABLE_NAME = "members";
 const AREA_TABLE_NAME = "areas";
+const LOG_TABLE_NAME = "noodle_logs";
 const STORAGE_BUCKET = "noodle-photos";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -90,6 +91,7 @@ const MEMBER_STATUSES = [
 ];
 
 let shops = [];
+let logs = [];
 let selectedShopId = null;
 let members = [];
 let isCoordinateMode = false;
@@ -124,7 +126,8 @@ async function init() {
 	console.log('members loaded:', members.length, Object.keys(memberMap).length);
 	await loadShops();
 	console.log('shops loaded:', shops.length);
-
+	await loadLogs();
+	console.log('logs loaded:', logs.length);
 	renderPins();
 	renderShopList();
 	renderCompletionStatus();
@@ -199,6 +202,21 @@ async function loadMembers() {
 		map[String(member.id)] = member;
 		return map;
 	}, {});
+}
+
+async function loadLogs() {
+	const { data, error } = await supabaseClient
+		.from(LOG_TABLE_NAME)
+		.select("*")
+		.order("logged_at", { ascending: false });
+
+	if (error) {
+		console.error(error);
+		alert("ログの取得に失敗しました");
+		return;
+	}
+
+	logs = data || [];
 }
 
 async function loadAreas() {
@@ -526,98 +544,43 @@ function renderMemberList() {
 }
 
 function renderTabelog() {
-	const logs = [];
+	if (!tabelogList) return;
 
-	const visitedShops = shops
-		.filter((shop) => shop.status === "visited")
-		.map((shop) => {
-			const visitorName =
-				memberMap[String(shop.visitor_id)]?.name ||
-				shop.visitor_name ||
-				"未登録";
-
-			return {
-				type: "visit",
-				date: shop.created_at,
-				html: `
-					<span>${escapeHtml(shop.shop_name)}</span>
-					<span>${escapeHtml(visitorName)}</span>
-					<span>訪問</span>
-				`
-			};
-		});
-
-	logs.push(...visitedShops);
-
-	const groupedShops = shops.reduce((groups, shop) => {
-		const areaId = shop.area_id ?? "unclassified";
-		const areaName = shop.area_name || "未分類";
-
-		if (!groups[areaId]) {
-			groups[areaId] = {
-				id: areaId,
-				name: areaName,
-				shops: []
-			};
-		}
-
-		groups[areaId].shops.push(shop);
-		return groups;
-	}, {});
-
-	Object.values(groupedShops).forEach((group) => {
-		const isConquered =
-			group.shops.length > 0 &&
-			group.shops.every((shop) => shop.status === "visited");
-
-		if (!isConquered) return;
-
-		const conqueredDate = group.shops
-			.map((shop) => shop.created_at)
-			.filter(Boolean)
-			.sort()
-			.at(-1);
-
-		const statusCounts = members.reduce((counts, member) => {
-			const status = member.status || "普通";
-			counts[status] = (counts[status] || 0) + 1;
-			return counts;
-		}, {});
-
-		const statusText = MEMBER_STATUSES
-			.map((item) => {
-				const count = statusCounts[item.value] || 0;
-				return count > 0 ? `${item.label}${count}` : "";
-			})
-			.filter(Boolean)
-			.join(" ");
-
-		logs.push({
-			type: "conquered",
-			date: conqueredDate,
-			html: `
-				<span class="tabelog-badge">👑 ${escapeHtml(group.name)} 制覇！</span>
-				<span>${escapeHtml(statusText)}</span>
-			`
-		});
-	});
-
-	const sortedLogs = logs
-		.filter((log) => log.date)
-		.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-	if (sortedLogs.length === 0) {
+	if (logs.length === 0) {
 		tabelogList.innerHTML = `<p>まだ記録がありません。</p>`;
 		return;
 	}
 
-	tabelogList.innerHTML = sortedLogs
-		.map((log) => `
-			<div class="tabelog-item ${log.type === "conquered" ? "tabelog-conquered" : ""}">
-				<div class="tabelog-date">${formatShortDate(log.date)}</div>
-				<div class="tabelog-text">${log.html}</div>
-			</div>
-		`)
+	tabelogList.innerHTML = logs
+		.map((log) => {
+			if (log.log_type === "conquest") {
+				const statusText = formatStatusCounts(log.status_counts || {});
+
+				return `
+					<div class="tabelog-item tabelog-conquered">
+						<div class="tabelog-date">${formatShortDate(log.logged_at)}</div>
+						<div class="tabelog-text">
+							<span class="tabelog-badge">👑 ${escapeHtml(log.area_name || "エリア")} 制覇！</span>
+							<span>${escapeHtml(statusText)}</span>
+						</div>
+					</div>
+				`;
+			}
+
+			const statusLabel = getStatusLabel(log.visitor_status);
+
+			return `
+				<div class="tabelog-item">
+					<div class="tabelog-date">${formatShortDate(log.logged_at)}</div>
+					<div class="tabelog-text">
+						<span>${escapeHtml(log.shop_name || "店舗")}</span>
+						<span>${escapeHtml(log.member_name || "未登録")}</span>
+						<span>${escapeHtml(statusLabel)}</span>
+						<span>訪問</span>
+					</div>
+				</div>
+			`;
+		})
 		.join("");
 }
 
@@ -751,8 +714,9 @@ closeMemberStatusModal.addEventListener("click", () => {
 	memberStatusModal.classList.add("hidden");
 });
 
-openTabelogModal.addEventListener("click", () => {
+openTabelogModal.addEventListener("click", async () => {
 	menuModal.classList.add("hidden");
+	await loadLogs();
 	renderTabelog();
 	tabelogModal.classList.remove("hidden");
 });
@@ -932,11 +896,31 @@ visitForm.addEventListener("submit", async (event) => {
 		return;
 	}
 
+	const targetShop = shops.find((shop) => String(shop.id) === String(selectedShopId));
+
+	if (!targetShop) {
+		alert("店舗情報が見つかりません");
+		return;
+	}
+
 	visitError.textContent = "";
 	visitError.classList.add("hidden");
 
+	const loggedAt = new Date().toISOString();
+
 	try {
 		const photoUrl = await uploadPhoto(selectedShopId, visitorId, file);
+
+		const updatedShops = buildUpdatedShopsAfterVisit(
+			selectedShopId,
+			visitorId,
+			visitorStatus,
+			comment,
+			photoUrl,
+			loggedAt
+		);
+
+		const updatedMembers = buildUpdatedMembers(visitorId, visitorStatus);
 
 		const { error } = await supabaseClient
 			.from(TABLE_NAME)
@@ -946,7 +930,7 @@ visitForm.addEventListener("submit", async (event) => {
 				visitor_status: visitorStatus,
 				comment,
 				photo_url: photoUrl,
-				created_at: new Date().toISOString()
+				created_at: loggedAt
 			})
 			.eq("id", selectedShopId);
 
@@ -961,17 +945,27 @@ visitForm.addEventListener("submit", async (event) => {
 
 		if (memberUpdateError) throw memberUpdateError;
 
+		await insertVisitLog(targetShop, visitorId, visitorStatus, loggedAt);
+
+		await insertConquestLogIfNeeded(
+			targetShop.area_id,
+			updatedShops,
+			updatedMembers,
+			loggedAt
+		);
+
 		photoInput.value = "";
 
 		await loadShops();
 		await loadMembers();
+		await loadLogs();
 
 		renderPins();
 		renderShopList();
 		renderMemberSelect();
 		renderMemberList();
 
-		const updatedShop = shops.find((s) => s.id === selectedShopId);
+		const updatedShop = shops.find((s) => String(s.id) === String(selectedShopId));
 		renderVisitHistory(updatedShop);
 
 		if (updatedShop.status === "visited") {
@@ -1067,6 +1061,114 @@ async function updateMemberStatus(memberId, status) {
 	} catch (error) {
 		console.error(error);
 		alert("メンバーのステータス更新に失敗しました。");
+	}
+}
+
+function getStatusLabel(status) {
+	return MEMBER_STATUSES.find((item) => item.value === status)?.label || status || "🙂 普通";
+}
+
+function countMemberStatuses(targetMembers) {
+	return targetMembers.reduce((counts, member) => {
+		const status = member.status || "普通";
+		counts[status] = (counts[status] || 0) + 1;
+		return counts;
+	}, {});
+}
+
+function formatStatusCounts(statusCounts) {
+	return MEMBER_STATUSES
+		.map((item) => {
+			const count = Number(statusCounts[item.value] || 0);
+			return count > 0 ? `${item.label}${count}` : "";
+		})
+		.filter(Boolean)
+		.join(" ");
+}
+
+function isAreaConquered(areaId, targetShops) {
+	const areaShops = targetShops.filter(
+		(shop) => String(shop.area_id) === String(areaId)
+	);
+
+	return (
+		areaShops.length > 0 &&
+		areaShops.every((shop) => shop.status === "visited")
+	);
+}
+
+function buildUpdatedMembers(visitorId, visitorStatus) {
+	return members.map((member) =>
+		String(member.id) === String(visitorId)
+			? { ...member, status: visitorStatus }
+			: member
+	);
+}
+
+function buildUpdatedShopsAfterVisit(shopId, visitorId, visitorStatus, comment, photoUrl, loggedAt) {
+	return shops.map((shop) =>
+		String(shop.id) === String(shopId)
+			? {
+				...shop,
+				status: "visited",
+				visitor_id: visitorId,
+				visitor_status: visitorStatus,
+				comment,
+				photo_url: photoUrl,
+				created_at: loggedAt
+			}
+			: shop
+	);
+}
+
+async function insertVisitLog(shop, visitorId, visitorStatus, loggedAt) {
+	const member = memberMap[String(visitorId)];
+
+	const { error } = await supabaseClient
+		.from(LOG_TABLE_NAME)
+		.insert({
+			log_type: "visit",
+			shop_id: shop.id,
+			shop_name: shop.shop_name,
+			area_id: shop.area_id,
+			area_name: shop.area_name,
+			member_id: visitorId,
+			member_name: member?.name || "",
+			visitor_status: visitorStatus,
+			logged_at: loggedAt
+		});
+
+	if (error) throw error;
+}
+
+async function insertConquestLogIfNeeded(areaId, updatedShops, updatedMembers, loggedAt) {
+	const beforeConquered = isAreaConquered(areaId, shops);
+	const afterConquered = isAreaConquered(areaId, updatedShops);
+
+	if (beforeConquered || !afterConquered) {
+		return;
+	}
+
+	const area = areaMap[String(areaId)];
+	const areaName =
+		area?.name ||
+		updatedShops.find((shop) => String(shop.area_id) === String(areaId))?.area_name ||
+		"未分類";
+
+	const statusCounts = countMemberStatuses(updatedMembers);
+
+	const { error } = await supabaseClient
+		.from(LOG_TABLE_NAME)
+		.insert({
+			log_type: "conquest",
+			area_id: areaId,
+			area_name: areaName,
+			status_counts: statusCounts,
+			logged_at: loggedAt
+		});
+
+	if (error && error.code !== "23505") {
+		throw error;
 	}
 }
 
