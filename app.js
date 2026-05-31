@@ -214,15 +214,12 @@ function renderPins() {
 	pinLayer.innerHTML = "";
 
 	shops.forEach((shop) => {
-		const pin = document.createElement("span");
-		pin.className = `pin ${shop.status === "visited" ? "visited" : "unvisited"}`;
-		pin.innerHTML = `<span class="pin-dot"></span>`;
-
 		const pinAnchor = document.createElement("button");
+		pinAnchor.type = "button";
 		pinAnchor.className = "pin-anchor";
 
-		const pin = document.createElement("span");
-		pin.className = `pin ${shop.status === "visited" ? "visited" : "unvisited"}`;
+	const pin = document.createElement("span");
+	pin.className = `pin ${shop.status === "visited" ? "visited" : "unvisited"}`;
 
 		if (String(shop.id) === String(selectedShopId)) {
 			pin.classList.add("selected");
@@ -236,7 +233,8 @@ function renderPins() {
 
 		pinAnchor.setAttribute("aria-label", shop.shop_name);
 
-		pinAnchor.addEventListener("click", () => {
+		pinAnchor.addEventListener("click", (event) => {
+			event.stopPropagation();
 			selectShop(shop.id);
 		});
 
