@@ -56,6 +56,17 @@
 			</label>
 
 			<label>
+				現在の状態
+				<select id="visitorStatus" required>
+					<option value="余裕">😋 余裕</option>
+					<option value="普通">🙂 普通</option>
+					<option value="腹八分目">😐 腹八分目</option>
+					<option value="限界">🤢 限界</option>
+					<option value="撃沈">💀 撃沈</option>
+				</select>
+			</label>
+
+			<label>
 			コメント
 			<textarea id="comment" placeholder="例：家系で一番好き"></textarea>
 			</label>
@@ -79,6 +90,7 @@
 
 		<button id="openAddMemberModal" class="menu-item-button">メンバー追加</button>
 		<button id="openMemberStatusModal" class="menu-item-button">メンバー状態</button>
+		<button id="openTabelogModal" class="menu-item-button">食べログ</button>
 		<button id="openRecordModal" class="menu-item-button">記録</button>
 		<div class="admin-menu-area">
 			<button id="openAdminModal" class="menu-item-button admin-button">管理者用</button>
@@ -108,6 +120,15 @@
 			<h2>メンバー状態</h2>
 
 			<div id="memberList" class="member-list"></div>
+		</div>
+	</div>
+
+	<div id="tabelogModal" class="modal hidden">
+		<div class="modal-content">
+			<button id="closeTabelogModal" class="close-button">×</button>
+			<h2>食べログ</h2>
+
+			<div id="tabelogList" class="tabelog-list"></div>
 		</div>
 	</div>
 

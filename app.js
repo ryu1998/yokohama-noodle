@@ -31,6 +31,7 @@ const visitHistory = document.getElementById("visitHistory");
 const visitForm = document.getElementById("visitForm");
 
 const visitorNameInput = document.getElementById("visitorName");
+const visitorStatusInput = document.getElementById("visitorStatus");
 const commentInput = document.getElementById("comment");
 const photoInput = document.getElementById("photoInput");
 const visitError = document.getElementById("visitError");
@@ -50,6 +51,11 @@ const closeMemberStatusModal = document.getElementById("closeMemberStatusModal")
 const memberForm = document.getElementById("memberForm");
 const memberNameInput = document.getElementById("memberName");
 const memberList = document.getElementById("memberList");
+
+const openTabelogModal = document.getElementById("openTabelogModal");
+const tabelogModal = document.getElementById("tabelogModal");
+const closeTabelogModal = document.getElementById("closeTabelogModal");
+const tabelogList = document.getElementById("tabelogList");
 
 const openRecordModal = document.getElementById("openRecordModal");
 const recordModal = document.getElementById("recordModal");
@@ -74,6 +80,14 @@ const adminAddShopButton = document.getElementById("adminAddShopButton");
 const adminAddShopStatus = document.getElementById("adminAddShopStatus");
 
 const mapImage = document.querySelector(".map-image");
+
+const MEMBER_STATUSES = [
+	{ value: "余裕", label: "😋 余裕" },
+	{ value: "普通", label: "🙂 普通" },
+	{ value: "腹八分目", label: "😐 腹八分目" },
+	{ value: "限界", label: "🤢 限界" },
+	{ value: "撃沈", label: "💀 撃沈" }
+];
 
 let shops = [];
 let selectedShopId = null;
@@ -450,12 +464,18 @@ function renderVisitHistory(shop) {
 		: "";
 
 	const visitorName = memberMap[String(shop.visitor_id)]?.name || shop.visitor_name || "";
+	const visitorStatus = shop.visitor_status || "普通";
+	const visitorStatusLabel =
+		MEMBER_STATUSES.find((item) => item.value === visitorStatus)?.label || visitorStatus;
 
 	visitHistory.innerHTML = `
 		<span class="visit-status visited">訪問済み</span>
 
 		<div class="visit-item">
-			<div class="visit-item-name">${escapeHtml(visitorName)}</div>
+			<div class="visit-item-name">
+				${escapeHtml(visitorName)}
+				<span class="visit-item-status">${visitorStatusLabel}</span>
+			</div>
 			<div class="visit-item-date">${dateText}</div>
 			<p>${escapeHtml(shop.comment || "")}</p>
 			${
@@ -476,6 +496,11 @@ function renderMemberSelect() {
 		option.textContent = member.name;
 		visitorNameInput.appendChild(option);
 	});
+
+	const selectedMember = memberMap[String(visitorNameInput.value)];
+	if (selectedMember && visitorStatusInput) {
+		visitorStatusInput.value = selectedMember.status || "普通";
+	}
 }
 
 function renderMemberList() {
@@ -487,35 +512,112 @@ function renderMemberList() {
 	memberList.innerHTML = members
 		.map((member) => {
 			const status = member.status || "普通";
-			const icons = {
-				"余裕": "😋",
-				"普通": "🙂",
-				"腹八分目": "😐",
-				"限界": "🤢"
-			};
+			const statusInfo = MEMBER_STATUSES.find((item) => item.value === status);
+			const label = statusInfo?.label || `🙂 ${escapeHtml(status)}`;
+
 			return `
-				<div class="member-item">
-					<div class="member-item-name">${escapeHtml(member.name)}</div>
-
-					<div class="member-status-row">
-						<select class="member-status-select" data-member-id="${member.id}">
-							<option value="余裕" ${status === "余裕" ? "selected" : ""}>😋 余裕</option>
-							<option value="普通" ${status === "普通" ? "selected" : ""}>🙂 普通</option>
-							<option value="腹八分目" ${status === "腹八分目" ? "selected" : ""}>😐 腹八分目</option>
-							<option value="限界" ${status === "限界" ? "selected" : ""}>🤢 限界</option>
-						</select>
-
-						<button
-							type="button"
-							class="member-status-update-button"
-							data-member-id="${member.id}"
-						>
-							更新
-						</button>
-					</div>
+				<div class="member-item member-status-display">
+					<span class="member-item-name">${escapeHtml(member.name)}</span>
+					<span class="member-current-status">${label}</span>
 				</div>
 			`;
 		})
+		.join("");
+}
+
+function renderTabelog() {
+	const logs = [];
+
+	const visitedShops = shops
+		.filter((shop) => shop.status === "visited")
+		.map((shop) => {
+			const visitorName =
+				memberMap[String(shop.visitor_id)]?.name ||
+				shop.visitor_name ||
+				"未登録";
+
+			return {
+				type: "visit",
+				date: shop.created_at,
+				html: `
+					<span>${escapeHtml(shop.shop_name)}</span>
+					<span>${escapeHtml(visitorName)}</span>
+					<span>訪問</span>
+				`
+			};
+		});
+
+	logs.push(...visitedShops);
+
+	const groupedShops = shops.reduce((groups, shop) => {
+		const areaId = shop.area_id ?? "unclassified";
+		const areaName = shop.area_name || "未分類";
+
+		if (!groups[areaId]) {
+			groups[areaId] = {
+				id: areaId,
+				name: areaName,
+				shops: []
+			};
+		}
+
+		groups[areaId].shops.push(shop);
+		return groups;
+	}, {});
+
+	Object.values(groupedShops).forEach((group) => {
+		const isConquered =
+			group.shops.length > 0 &&
+			group.shops.every((shop) => shop.status === "visited");
+
+		if (!isConquered) return;
+
+		const conqueredDate = group.shops
+			.map((shop) => shop.created_at)
+			.filter(Boolean)
+			.sort()
+			.at(-1);
+
+		const statusCounts = members.reduce((counts, member) => {
+			const status = member.status || "普通";
+			counts[status] = (counts[status] || 0) + 1;
+			return counts;
+		}, {});
+
+		const statusText = MEMBER_STATUSES
+			.map((item) => {
+				const count = statusCounts[item.value] || 0;
+				return count > 0 ? `${item.label}${count}` : "";
+			})
+			.filter(Boolean)
+			.join(" ");
+
+		logs.push({
+			type: "conquered",
+			date: conqueredDate,
+			html: `
+				<span class="tabelog-badge">👑 ${escapeHtml(group.name)} 制覇！</span>
+				<span>${escapeHtml(statusText)}</span>
+			`
+		});
+	});
+
+	const sortedLogs = logs
+		.filter((log) => log.date)
+		.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+	if (sortedLogs.length === 0) {
+		tabelogList.innerHTML = `<p>まだ記録がありません。</p>`;
+		return;
+	}
+
+	tabelogList.innerHTML = sortedLogs
+		.map((log) => `
+			<div class="tabelog-item ${log.type === "conquered" ? "tabelog-conquered" : ""}">
+				<div class="tabelog-date">${formatShortDate(log.date)}</div>
+				<div class="tabelog-text">${log.html}</div>
+			</div>
+		`)
 		.join("");
 }
 
@@ -649,6 +751,16 @@ closeMemberStatusModal.addEventListener("click", () => {
 	memberStatusModal.classList.add("hidden");
 });
 
+openTabelogModal.addEventListener("click", () => {
+	menuModal.classList.add("hidden");
+	renderTabelog();
+	tabelogModal.classList.remove("hidden");
+});
+
+closeTabelogModal.addEventListener("click", () => {
+	tabelogModal.classList.add("hidden");
+});
+
 openRecordModal.addEventListener("click", () => {
 	menuModal.classList.add("hidden");
 	renderRanking();
@@ -682,34 +794,12 @@ toggleCoordinateModeButton.addEventListener("click", () => {
 	mapWrapper.classList.toggle("coordinate-mode", isCoordinateMode);
 });
 
-memberList.addEventListener("click", async (event) => {
-	const button = event.target.closest(".member-status-update-button");
-	if (!button) return;
+visitorNameInput.addEventListener("change", () => {
+	const selectedMember = memberMap[String(visitorNameInput.value)];
 
-	const memberId = button.dataset.memberId;
-	const select = memberList.querySelector(
-		`.member-status-select[data-member-id="${memberId}"]`
-	);
+	if (!selectedMember || !visitorStatusInput) return;
 
-	if (!select) return;
-
-	const status = select.value;
-
-	button.disabled = true;
-	button.textContent = "更新中...";
-
-	try {
-		await updateMemberStatus(memberId, status);
-		button.textContent = "更新済み";
-	} catch (error) {
-		console.error(error);
-		button.textContent = "失敗";
-	}
-
-	setTimeout(() => {
-		button.disabled = false;
-		button.textContent = "更新";
-	}, 1000);
+	visitorStatusInput.value = selectedMember.status || "普通";
 });
 
 mapWrapper.addEventListener("click", async (event) => {
@@ -832,11 +922,12 @@ visitForm.addEventListener("submit", async (event) => {
 	if (!selectedShopId) return;
 
 	const visitorId = visitorNameInput.value;
+	const visitorStatus = visitorStatusInput.value;
 	const comment = commentInput.value.trim();
 	const file = photoInput.files[0];
 
-	if (!visitorId || !file) {
-		visitError.textContent = "メンバーと写真の両方を選択してください。";
+	if (!visitorId || !visitorStatus || !file) {
+		visitError.textContent = "メンバー、状態、写真を選択してください。";
 		visitError.classList.remove("hidden");
 		return;
 	}
@@ -852,16 +943,33 @@ visitForm.addEventListener("submit", async (event) => {
 			.update({
 				status: "visited",
 				visitor_id: visitorId,
+				visitor_status: visitorStatus,
 				comment,
 				photo_url: photoUrl,
 				created_at: new Date().toISOString()
 			})
 			.eq("id", selectedShopId);
+
+		if (error) throw error;
+
+		const { error: memberUpdateError } = await supabaseClient
+			.from(MEMBER_TABLE_NAME)
+			.update({
+				status: visitorStatus
+			})
+			.eq("id", visitorId);
+
+		if (memberUpdateError) throw memberUpdateError;
+
 		photoInput.value = "";
 
 		await loadShops();
+		await loadMembers();
+
 		renderPins();
 		renderShopList();
+		renderMemberSelect();
+		renderMemberList();
 
 		const updatedShop = shops.find((s) => s.id === selectedShopId);
 		renderVisitHistory(updatedShop);
@@ -936,7 +1044,7 @@ async function updateMemberStatus(memberId, status) {
 	if (!memberId) return;
 
 	try {
-		const allowed = ["余裕", "普通", "腹八分目", "限界"];
+		const allowed = MEMBER_STATUSES.map((item) => item.value);
 		if (!allowed.includes(status)) {
 			alert("不正なステータスです");
 			return;

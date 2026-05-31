@@ -588,6 +588,10 @@ main {
 	content: "👥";
 }
 
+#openTabelogModal::before {
+	content: "📖";
+}
+
 #openRecordModal::before {
 	content: "🏆";
 }
@@ -864,6 +868,68 @@ main {
 	opacity: 0;
 	transform: translateY(-8px);
 	pointer-events: none;
+}
+
+.member-status-display {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 10px 12px;
+}
+
+.member-current-status {
+	font-size: 14px;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.visit-item-status {
+	margin-left: 8px;
+	font-size: 13px;
+	font-weight: 700;
+	color: #d84315;
+}
+
+.tabelog-list {
+	display: grid;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+.tabelog-item {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	column-gap: 10px;
+	align-items: center;
+
+	padding: 9px 10px;
+	border-radius: 12px;
+	background: #fafafa;
+
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+.tabelog-date {
+	white-space: nowrap;
+	font-weight: 700;
+	color: #666;
+}
+
+.tabelog-text {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.tabelog-conquered {
+	background: linear-gradient(135deg, #fff8c4, #ffe082);
+	border-left: 5px solid #ffb300;
+}
+
+.tabelog-badge {
+	font-weight: 800;
+	color: #b26a00;
 }
 
 @keyframes pinGlow {
