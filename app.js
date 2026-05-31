@@ -88,6 +88,8 @@ let dragStartY = 0;
 let startPanX = 0;
 let startPanY = 0;
 let collapsedAreaIds = new Set();
+let pinchStartDistance = null;
+let pinchStartZoom = 1;
 
 // ==============================
 // 初期化
@@ -778,6 +780,13 @@ function closeShopModal() {
 	modal.classList.add("hidden");
 }
 
+function getDistance(touch1, touch2) {
+	const dx = touch1.clientX - touch2.clientX;
+	const dy = touch1.clientY - touch2.clientY;
+
+	return Math.sqrt(dx * dx + dy * dy);
+}
+
 // ==============================
 // 登録処理
 // ==============================
@@ -1026,7 +1035,11 @@ mapWrapper.addEventListener("wheel", (event) => {
 });
 
 mapWrapper.addEventListener("pointerdown", (event) => {
-	if (mapZoom <= 1) return;
+	if (event.pointerType === "touch") {
+	// スマホは常にドラッグ可能
+	} else {
+		if (mapZoom <= 1) return;
+}
 	if (event.target.closest(".pin")) return;
 
 	event.preventDefault();
@@ -1065,6 +1078,40 @@ mapWrapper.addEventListener("pointerup", (event) => {
 mapWrapper.addEventListener("pointercancel", () => {
 	isMapDragging = false;
 	mapWrapper.classList.remove("dragging");
+});
+
+mapWrapper.addEventListener("touchstart", (event) => {
+	if (event.touches.length !== 2) return;
+
+	pinchStartDistance = getDistance(
+		event.touches[0],
+		event.touches[1]
+	);
+
+	pinchStartZoom = mapZoom;
+});
+
+mapWrapper.addEventListener("touchmove", (event) => {
+	if (event.touches.length !== 2) return;
+
+	event.preventDefault();
+
+	const currentDistance = getDistance(
+		event.touches[0],
+		event.touches[1]
+	);
+
+	const scale = currentDistance / pinchStartDistance;
+
+	mapZoom = pinchStartZoom * scale;
+
+	mapZoom = Math.min(Math.max(mapZoom, 1), 3);
+
+	updateMapZoom();
+});
+
+mapWrapper.addEventListener("touchend", () => {
+	pinchStartDistance = null;
 });
 
 // ==============================
