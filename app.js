@@ -1791,6 +1791,7 @@ visitForm.addEventListener("submit", async (event) => {
 			selectedShopId,
 			visitorId,
 			visitorStatus,
+			ramenType,
 			comment,
 			photoUrl,
 			loggedAt
@@ -1840,6 +1841,7 @@ visitForm.addEventListener("submit", async (event) => {
 
 		photoInput.value = "";
 
+		await loadAreas();
 		await loadShops();
 		await loadMembers();
 		await loadLogs();
@@ -2050,7 +2052,7 @@ function buildUpdatedMembers(visitorId, visitorStatus) {
 	);
 }
 
-function buildUpdatedShopsAfterVisit(shopId, visitorId, visitorStatus, comment, photoUrl, loggedAt) {
+function buildUpdatedShopsAfterVisit(shopId, visitorId, visitorStatus, ramenType, comment, photoUrl, loggedAt) {
 	return shops.map((shop) =>
 		String(shop.id) === String(shopId)
 			? {

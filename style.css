@@ -1496,6 +1496,11 @@ main {
 	border-color: #666;
 	opacity: 0.65;
 	cursor: not-allowed;
+
+	animation: none;
+	transform: none;
+	box-shadow: none;
+	pointer-events: none;
 }
 
 .bowser-modal-content {
