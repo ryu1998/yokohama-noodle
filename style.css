@@ -93,6 +93,103 @@ main {
 	position: absolute;
 	inset: 0;
 	pointer-events: auto;
+	z-index: 2;
+}
+
+#areaLayer {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 1;
+	transform-origin: center center;
+}
+
+#areaLayer * {
+	pointer-events: none;
+}
+
+.area-svg {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+}
+
+.area-polygon {
+	stroke-width: 3;
+	vector-effect: non-scaling-stroke;
+	filter: none;
+}
+
+.area-polygon.selected-area {
+	stroke-width: 4;
+	filter:
+		drop-shadow(0 3px 3px rgba(0, 0, 0, 0.28))
+		drop-shadow(0 8px 10px rgba(0, 0, 0, 0.18));
+}
+
+.area-polygon-preview {
+	stroke-width: 1;
+	stroke-dasharray: none;
+	vector-effect: non-scaling-stroke;
+	fill: none;
+}
+
+.area-point-marker {
+	position: absolute;
+	width: 10px;
+	height: 10px;
+	border: 2px solid white;
+	border-radius: 50%;
+	background: #2196f3;
+	transform: translate(-50%, -50%);
+	z-index: 3;
+	box-shadow: 0 0 6px rgba(33, 150, 243, 0.8);
+	pointer-events: none;
+
+	color: white;
+	font-size: 9px;
+	font-weight: 900;
+	display: grid;
+	place-items: center;
+}
+
+.admin-area-polygon {
+	display: grid;
+	gap: 12px;
+}
+
+.admin-polygon-actions {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	gap: 8px;
+}
+
+.admin-polygon-actions button,
+#toggleAreaPolygonMode {
+	padding: 10px;
+	border: none;
+	border-radius: 12px;
+	background: #d84315;
+	color: white;
+	font-size: 13px;
+	font-weight: 800;
+	cursor: pointer;
+}
+
+#undoAreaPointButton {
+	background: #757575;
+}
+
+#clearAreaPointsButton {
+	background: #5d4037;
+}
+
+.map-wrapper.area-polygon-mode {
+	cursor: crosshair;
+	outline: 3px solid #ffb300;
+	outline-offset: 3px;
 }
 
 .pin-anchor {

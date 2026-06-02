@@ -21,6 +21,7 @@ let memberMap = {};
 // DOM
 // ==============================
 
+const areaLayer = document.getElementById("areaLayer");
 const pinLayer = document.getElementById("pinLayer");
 const shopList = document.getElementById("shopList");
 const completionStatus = document.getElementById("completionStatus");
@@ -120,6 +121,15 @@ const ramenTypeModal = document.getElementById("ramenTypeModal");
 const closeRamenTypeModal = document.getElementById("closeRamenTypeModal");
 const ramenTypeList = document.getElementById("ramenTypeList");
 
+const adminAreaPolygonSelect = document.getElementById("adminAreaPolygonSelect");
+const adminAreaColorInput = document.getElementById("adminAreaColorInput");
+const toggleAreaPolygonModeButton = document.getElementById("toggleAreaPolygonMode");
+const undoAreaPointButton = document.getElementById("undoAreaPointButton");
+const clearAreaPointsButton = document.getElementById("clearAreaPointsButton");
+const saveAreaPolygonButton = document.getElementById("saveAreaPolygonButton");
+const adminAreaPointList = document.getElementById("adminAreaPointList");
+const adminAreaPolygonStatus = document.getElementById("adminAreaPolygonStatus");
+
 const MEMBER_STATUSES = [
 	{ value: "余裕", label: "😋 余裕" },
 	{ value: "普通", label: "🙂 普通" },
@@ -173,6 +183,8 @@ let collapsedAreaIds = new Set();
 let pinchStartDistance = null;
 let pinchStartZoom = 1;
 let hasMapMoved = false;
+let isAreaPolygonMode = false;
+let editingAreaPoints = [];
 
 // ==============================
 // 初期化
@@ -194,7 +206,9 @@ async function init() {
 	console.log('shops loaded:', shops.length);
 	await loadLogs();
 	console.log('logs loaded:', logs.length);
+	renderAreaPolygons();
 	renderPins();
+	renderAdminAreaPolygonSelect();
 	renderShopList();
 	renderCompletionStatus();
 	renderMemberSelect();
@@ -1084,6 +1098,7 @@ function focusShopOnMap(shopId) {
 
 function selectShop(shopId) {
 	selectedShopId = shopId;
+	renderAreaPolygons();
 	renderPins();
 	renderShopList();
 
@@ -1194,8 +1209,9 @@ closeRecordModal.addEventListener("click", () => {
 
 openAdminModal.addEventListener("click", () => {
 	menuModal.classList.add("hidden");
-	renderAdminShopSelect();
-	renderAdminAreaSelect();
+	renderAreaPolygons();
+	renderPins();
+	renderAdminAreaPolygonSelect();
 	adminUpdateStatus.textContent = "";
 	adminUpdateStatus.className = "admin-status";
 	adminModal.classList.remove("hidden");
@@ -1228,12 +1244,232 @@ completeConquestModal.addEventListener("click", (event) => {
 toggleCoordinateModeButton.addEventListener("click", () => {
 	isCoordinateMode = !isCoordinateMode;
 
+	if (isCoordinateMode) {
+		isAreaPolygonMode = false;
+		toggleAreaPolygonModeButton.textContent = "エリア座標取得モード：OFF";
+		mapWrapper.classList.remove("area-polygon-mode");
+	}
+
 	toggleCoordinateModeButton.textContent = isCoordinateMode
 		? "座標取得モード：ON"
 		: "座標取得モード：OFF";
 
 	mapWrapper.classList.toggle("coordinate-mode", isCoordinateMode);
 });
+
+toggleAreaPolygonModeButton.addEventListener("click", () => {
+	isAreaPolygonMode = !isAreaPolygonMode;
+
+	if (isAreaPolygonMode) {
+		isCoordinateMode = false;
+		toggleCoordinateModeButton.textContent = "座標取得モード：OFF";
+		mapWrapper.classList.remove("coordinate-mode");
+	}
+
+	toggleAreaPolygonModeButton.textContent = isAreaPolygonMode
+		? "エリア座標取得モード：ON"
+		: "エリア座標取得モード：OFF";
+
+	mapWrapper.classList.toggle("area-polygon-mode", isAreaPolygonMode);
+});
+
+adminAreaPolygonSelect.addEventListener("change", () => {
+	const area = areas.find(
+		(area) => String(area.id) === String(adminAreaPolygonSelect.value)
+	);
+
+	editingAreaPoints = normalizePolygonPoints(area?.polygon_points);
+
+	if (adminAreaColorInput) {
+		adminAreaColorInput.value = area?.polygon_color || getAreaColor(area?.id);
+	}
+
+	renderAreaPointList();
+	renderAreaPolygons();
+});
+
+undoAreaPointButton.addEventListener("click", () => {
+	editingAreaPoints.pop();
+	renderAreaPointList();
+	renderAreaPolygons();
+});
+
+clearAreaPointsButton.addEventListener("click", () => {
+	editingAreaPoints = [];
+	renderAreaPointList();
+	renderAreaPolygons();
+});
+
+saveAreaPolygonButton.addEventListener("click", async () => {
+	const areaId = adminAreaPolygonSelect.value;
+
+	if (!areaId) {
+		adminAreaPolygonStatus.textContent = "エリアを選択してください";
+		adminAreaPolygonStatus.className = "admin-status error";
+		return;
+	}
+
+	if (editingAreaPoints.length < 3) {
+		adminAreaPolygonStatus.textContent = "ポリゴンは3点以上必要です";
+		adminAreaPolygonStatus.className = "admin-status error";
+		return;
+	}
+
+	adminAreaPolygonStatus.textContent = "エリアを保存中...";
+	adminAreaPolygonStatus.className = "admin-status";
+
+	try {
+		const polygonColor = adminAreaColorInput.value || getAreaColor(areaId);
+
+		const { error } = await supabaseClient
+			.from(AREA_TABLE_NAME)
+			.update({
+				polygon_points: editingAreaPoints,
+				polygon_color: polygonColor
+			})
+			.eq("id", areaId);
+
+		if (error) throw error;
+
+		await loadAreas();
+
+		isAreaPolygonMode = false;
+		editingAreaPoints = [];
+
+		toggleAreaPolygonModeButton.textContent = "エリア座標取得モード：OFF";
+		mapWrapper.classList.remove("area-polygon-mode");
+
+		renderAdminAreaPolygonSelect();
+		renderAreaPointList();
+		renderAreaPolygons();
+
+		adminAreaPolygonStatus.textContent = "エリアを保存しました";
+		adminAreaPolygonStatus.className = "admin-status success";
+	} catch (error) {
+		console.error(error);
+		adminAreaPolygonStatus.textContent = "エリア保存に失敗しました";
+		adminAreaPolygonStatus.className = "admin-status error";
+	}
+});
+
+function renderAreaPolygons() {
+	if (!areaLayer) return;
+
+	areaLayer.innerHTML = "";
+
+	const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+	svg.setAttribute("class", "area-svg");
+	svg.setAttribute("viewBox", "0 0 100 100");
+	svg.setAttribute("preserveAspectRatio", "none");
+
+	areas.forEach((area) => {
+		const points = normalizePolygonPoints(area.polygon_points);
+		if (points.length < 3) return;
+
+		const areaShops = shops.filter(
+			(shop) => String(shop.area_id) === String(area.id)
+		);
+
+		const total = areaShops.length;
+		const visited = areaShops.filter((shop) => shop.status === "visited").length;
+		const conquestRate = total === 0 ? 0 : visited / total;
+
+		const opacity = 0.1 + conquestRate * 0.5;
+		const color = area.polygon_color || getAreaColor(area.id);
+
+		const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+
+		polygon.setAttribute(
+			"points",
+			points.map((point) => `${point.x},${point.y}`).join(" ")
+		);
+
+		const selectedShop = shops.find(
+			(shop) => String(shop.id) === String(selectedShopId)
+		);
+
+		const isSelectedArea =
+			selectedShop &&
+			String(selectedShop.area_id) === String(area.id);
+
+		const isConquered =
+			total > 0 &&
+			visited === total;
+
+const displayColor =
+	isConquered
+		? "#FFD700"
+		: color;
+
+const displayOpacity =
+	isConquered
+		? 0.7
+		: (
+			isSelectedArea
+				? Math.min(opacity + 0.15, 0.8)
+				: opacity
+		);
+
+		polygon.setAttribute("fill", displayColor);
+
+		polygon.setAttribute(
+			"fill-opacity",
+			displayOpacity.toFixed(2)
+		);
+
+		polygon.setAttribute(
+			"stroke",
+			displayColor
+		);
+
+		polygon.setAttribute(
+			"stroke-width",
+			isConquered
+				? "4"
+				: isSelectedArea
+					? "3"
+					: "2"
+		);
+		polygon.setAttribute("stroke-opacity", "1");
+
+		polygon.setAttribute(
+			"class",
+			`area-polygon ${isSelectedArea ? "selected-area" : ""}`
+		);
+
+		svg.appendChild(polygon);
+	});
+
+	if (isAreaPolygonMode && editingAreaPoints.length >= 2) {
+		const previewColor = adminAreaColorInput?.value || "#2196f3";
+
+		const preview = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+
+		preview.setAttribute(
+			"points",
+			editingAreaPoints.map((point) => `${point.x},${point.y}`).join(" ")
+		);
+
+		preview.setAttribute("class", "area-polygon-preview");
+		preview.setAttribute("stroke", previewColor);
+		preview.setAttribute("fill", "none");
+
+		svg.appendChild(preview);
+	}
+
+	areaLayer.appendChild(svg);
+
+	if (!isAreaPolygonMode) return;
+
+	editingAreaPoints.forEach((point, index) => {
+		const marker = document.createElement("div");
+		marker.className = "area-point-marker";
+		marker.textContent = index + 1;
+		marker.style.left = `${point.x}%`;
+		marker.style.top = `${point.y}%`;
+		areaLayer.appendChild(marker);
+	});
+}
 
 mapWrapper.addEventListener("click", async (event) => {
 	if (hasMapMoved) {
@@ -1242,6 +1478,32 @@ mapWrapper.addEventListener("click", async (event) => {
 	}
 
 	if (isMapDragging) {
+		return;
+	}
+
+	if (isAreaPolygonMode) {
+		if (event.target.closest(".pin")) {
+			return;
+		}
+
+		const selectedAreaId = adminAreaPolygonSelect?.value;
+
+		if (!selectedAreaId) {
+			adminAreaPolygonStatus.textContent = "エリアを選択してください";
+			adminAreaPolygonStatus.className = "admin-status error";
+			return;
+		}
+
+		const point = getMapCoordinateFromClick(event);
+
+		editingAreaPoints.push(point);
+
+		adminAreaPolygonStatus.textContent = `${editingAreaPoints.length}点目を追加しました`;
+		adminAreaPolygonStatus.className = "admin-status success";
+
+		renderAreaPointList();
+		renderAreaPolygons();
+
 		return;
 	}
 
@@ -1260,22 +1522,10 @@ mapWrapper.addEventListener("click", async (event) => {
 		return;
 	}
 
-	const rect = mapWrapper.getBoundingClientRect();
+	const coordinate = getMapCoordinateFromClick(event);
 
-	const wrapperX = event.clientX - rect.left - mapPanX;
-	const wrapperY = event.clientY - rect.top - mapPanY;
-
-	const centerX = rect.width / 2;
-	const centerY = rect.height / 2;
-
-	const imageX = centerX + (wrapperX - centerX) / mapZoom;
-	const imageY = centerY + (wrapperY - centerY) / mapZoom;
-
-	const x = (imageX / rect.width) * 100;
-	const y = (imageY / rect.height) * 100;
-
-	const roundedX = Number(x.toFixed(1));
-	const roundedY = Number(y.toFixed(1));
+	const roundedX = coordinate.x;
+	const roundedY = coordinate.y;
 
 	adminLastCoordinate.textContent = `座標：x=${roundedX}, y=${roundedY}`;
 	adminSqlCoordinate.textContent = `SQL：${roundedX}, ${roundedY}`;
@@ -1292,6 +1542,7 @@ mapWrapper.addEventListener("click", async (event) => {
 		await updateShopCoordinate(selectedAdminShopId, roundedX, roundedY);
 
 		selectedShopId = String(selectedAdminShopId);
+		renderAreaPolygons();
 		renderPins();
 		renderShopList();
 		renderAdminShopSelect();
@@ -1325,6 +1576,27 @@ mapWrapper.addEventListener("click", async (event) => {
 		adminUpdateStatus.className = "admin-status error";
 	}
 });
+
+function getMapCoordinateFromClick(event) {
+	const rect = mapWrapper.getBoundingClientRect();
+
+	const wrapperX = event.clientX - rect.left - mapPanX;
+	const wrapperY = event.clientY - rect.top - mapPanY;
+
+	const centerX = rect.width / 2;
+	const centerY = rect.height / 2;
+
+	const imageX = centerX + (wrapperX - centerX) / mapZoom;
+	const imageY = centerY + (wrapperY - centerY) / mapZoom;
+
+	const x = (imageX / rect.width) * 100;
+	const y = (imageY / rect.height) * 100;
+
+	return {
+		x: Number(x.toFixed(1)),
+		y: Number(y.toFixed(1))
+	};
+}
 
 bowserCallButton.addEventListener("click", openBowserConfirmModal);
 
@@ -1369,6 +1641,7 @@ confirmBowserCall.addEventListener("click", async () => {
 		closeBowserModal();
 		closeShopModal();
 
+		renderAreaPolygons();
 		renderPins();
 		renderShopList();
 		focusShopOnMap(shop.id);
@@ -1571,6 +1844,7 @@ visitForm.addEventListener("submit", async (event) => {
 		await loadMembers();
 		await loadLogs();
 
+		renderAreaPolygons();
 		renderPins();
 		renderShopList();
 		renderMemberSelect();
@@ -1951,6 +2225,70 @@ function renderAdminAreaSelect() {
 	});
 }
 
+function renderAdminAreaPolygonSelect() {
+	if (!adminAreaPolygonSelect) return;
+
+	const currentValue = adminAreaPolygonSelect.value;
+
+	adminAreaPolygonSelect.innerHTML = `<option value="">エリアを選択</option>`;
+
+	areas.forEach((area) => {
+		const option = document.createElement("option");
+		option.value = area.id;
+
+		const points = normalizePolygonPoints(area.polygon_points);
+		option.textContent = `${area.name}（${points.length}点）`;
+
+		adminAreaPolygonSelect.appendChild(option);
+	});
+
+	if (
+		currentValue &&
+		areas.some((area) => String(area.id) === String(currentValue))
+	) {
+		adminAreaPolygonSelect.value = currentValue;
+	}
+}
+
+function normalizePolygonPoints(value) {
+	if (!value) return [];
+
+	if (Array.isArray(value)) {
+		return value
+			.map((point) => ({
+				x: Number(point.x),
+				y: Number(point.y)
+			}))
+			.filter((point) =>
+				Number.isFinite(point.x) &&
+				Number.isFinite(point.y)
+			);
+	}
+
+	try {
+		const parsed = JSON.parse(value);
+		return normalizePolygonPoints(parsed);
+	} catch {
+		return [];
+	}
+}
+
+function getAreaColor(areaId) {
+	const colors = [
+		"#ff9800",
+		"#2196f3",
+		"#4caf50",
+		"#9c27b0",
+		"#f44336",
+		"#00bcd4",
+		"#795548",
+		"#ff5722"
+	];
+
+	const index = Math.abs(Number(areaId) || 0) % colors.length;
+	return colors[index];
+}
+
 adminAddShopButton.addEventListener("click", async () => {
 	const shopName = adminNewShopName.value.trim();
 	const areaId = adminNewShopArea.value;
@@ -1982,6 +2320,7 @@ adminAddShopButton.addEventListener("click", async () => {
 
 		await loadShops();
 
+		renderAreaPolygons();
 		renderPins();
 		renderShopList();
 		renderAdminShopSelect();
@@ -2008,7 +2347,15 @@ function clampMapPan() {
 function updateMapZoom() {
 	clampMapPan();
 
-	mapImage.style.transform = `translate(${mapPanX}px, ${mapPanY}px) scale(${mapZoom})`;
+	const mapTransform = `translate(${mapPanX}px, ${mapPanY}px) scale(${mapZoom})`;
+
+	mapImage.style.transform = mapTransform;
+
+	if (areaLayer) {
+		areaLayer.style.transform = mapTransform;
+	}
+
+	renderAreaPolygons();
 	renderPins();
 }
 
@@ -2027,6 +2374,10 @@ mapWrapper.addEventListener("wheel", (event) => {
 });
 
 mapWrapper.addEventListener("pointerdown", (event) => {
+	if (isCoordinateMode || isAreaPolygonMode) {
+		return;
+	}
+
 	if (event.pointerType !== "touch" && mapZoom <= 1) return;
 	if (event.target.closest(".pin")) return;
 

@@ -54,12 +54,14 @@
 		<section class="map-section">
 			<div class="map-wrapper" id="mapWrapper">
 				<div class="map-layer">
-				<img
-					src="./assets/yokohama-map.png"
-					alt="横浜駅周辺マップ"
-					class="map-image"
-				/>
+					<img
+						src="./assets/yokohama-map.png"
+						alt="横浜駅周辺マップ"
+						class="map-image"
+					/>
 				</div>
+
+				<div id="areaLayer"></div>
 				<div id="pinLayer"></div>
 			</div>
 		</section>
@@ -282,6 +284,54 @@
 				<hr class="admin-divider" />
 
 				<div class="admin-add-shop">
+					<hr class="admin-divider" />
+
+					<div class="admin-area-polygon">
+						<h3>エリア塗りつぶし設定</h3>
+
+						<label class="admin-field">
+							<span>座標を設定するエリア</span>
+							<select id="adminAreaPolygonSelect">
+								<option value="">エリアを選択</option>
+							</select>
+						</label>
+
+						<label class="admin-field">
+							<span>エリア色</span>
+							<input
+								type="color"
+								id="adminAreaColorInput"
+								value="#ff9800"
+							/>
+						</label>
+
+						<button id="toggleAreaPolygonMode" type="button">
+							エリア座標取得モード：OFF
+						</button>
+
+						<div class="admin-polygon-actions">
+							<button id="undoAreaPointButton" type="button">
+								最後の点を削除
+							</button>
+
+							<button id="clearAreaPointsButton" type="button">
+								点を全削除
+							</button>
+
+							<button id="saveAreaPolygonButton" type="button">
+								エリアを保存
+							</button>
+						</div>
+
+						<p class="admin-help">
+							エリアを選択し、地図を左から右へ順番にクリックしてください。クリックした順番で線を結びます。
+						</p>
+
+						<div class="admin-coordinate-box">
+							<div id="adminAreaPointList">エリア座標：未取得</div>
+							<div id="adminAreaPolygonStatus" class="admin-status"></div>
+						</div>
+					</div>
 					<h3>店舗追加</h3>
 
 					<label class="admin-field">
