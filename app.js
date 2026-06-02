@@ -873,6 +873,16 @@ function openShopModal(shopId) {
 
 	modalShopName.textContent = shop.shop_name;
 
+	if (shop.link) {
+		modalShopLink.innerHTML = `
+			<a href="${escapeHtml(shop.link)}" target="_blank" rel="noopener noreferrer">
+				店舗ページを開く
+			</a>
+		`;
+	} else {
+		modalShopLink.innerHTML = "";
+	}
+
 	renderVisitHistory(shop);
 
 	if (shop.status === "visited") {

@@ -1253,6 +1253,26 @@ main {
 	white-space: nowrap;
 }
 
+.modal-shop-link {
+	margin-top: -4px;
+	margin-bottom: 12px;
+	font-size: 12px;
+}
+
+.modal-shop-link a {
+	color: #d84315;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.modal-shop-link a::before {
+	content: "🔗 ";
+}
+
+.modal-shop-link a:hover {
+	text-decoration: underline;
+}
+
 @media (max-width: 480px) {
 	.member-record-grid {
 		grid-template-columns: 1fr;
