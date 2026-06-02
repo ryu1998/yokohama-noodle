@@ -1273,24 +1273,43 @@ main {
 	text-decoration: underline;
 }
 
-.bowser-call-button {
+.visit-form .bowser-call-button {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	gap: 12px;
+
 	padding: 14px 16px;
-	border: 2px solid #5d4037;
+
+	border: 2px solid #ffb300;
 	border-radius: 16px;
+
 	background:
-		radial-gradient(circle at top left, rgba(255, 255, 255, 0.55), transparent 36%),
-		linear-gradient(135deg, #3e2723, #d84315);
-	color: white;
+		radial-gradient(
+			circle at top left,
+			rgba(255,255,255,0.85),
+			transparent 35%
+		),
+		linear-gradient(
+			135deg,
+			#fff8c4,
+			#ffd54f,
+			#ffb300
+		);
+
+	color: #7a4f00;
+
 	font-size: 16px;
 	font-weight: 900;
+
 	box-shadow:
-		0 0 14px rgba(216, 67, 21, 0.35),
-		0 5px 14px rgba(0, 0, 0, 0.18);
+		0 0 10px rgba(255,193,7,0.5),
+		0 0 20px rgba(255,193,7,0.3),
+		0 4px 14px rgba(0,0,0,0.15);
+
 	cursor: pointer;
+
+	animation: bowserPulse 2s infinite;
 }
 
 .bowser-call-button small {
@@ -1426,5 +1445,29 @@ main {
 	.tabelog-conquest-title {
 		font-weight: 900;
 		margin-bottom: 2px;
+	}
+}
+
+@keyframes bowserPulse {
+	0% {
+		transform: scale(1);
+		box-shadow:
+			0 0 12px rgba(255,193,7,0.6),
+			0 0 24px rgba(255,193,7,0.3);
+	}
+
+	50% {
+		transform: scale(1.03);
+		box-shadow:
+			0 0 20px rgba(255,193,7,1),
+			0 0 40px rgba(255,193,7,0.7),
+			0 0 60px rgba(255,193,7,0.4);
+	}
+
+	100% {
+		transform: scale(1);
+		box-shadow:
+			0 0 12px rgba(255,193,7,0.6),
+			0 0 24px rgba(255,193,7,0.3);
 	}
 }
