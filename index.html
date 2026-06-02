@@ -3,11 +3,27 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>横浜ラーメン</title>
+	<title>横ラーダンジョン</title>
 	<link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
+	<div id="currentMemberModal" class="modal hidden">
+		<div class="modal-content current-member-modal-content">
+			<h2>操作メンバーを選択</h2>
+			<p class="current-member-help">
+				この端末で操作するメンバーを選択してください。
+			</p>
+
+			<select id="currentMemberSelect" class="current-member-select">
+				<option value="">メンバーを選択</option>
+			</select>
+
+			<button id="saveCurrentMemberButton" type="button">
+				このメンバーで開始
+			</button>
+		</div>
+	</div>
 	<!-- App header -->
 	<header class="app-header">
       <button id="menuButton" class="menu-button" aria-label="メニューを開く">
@@ -18,8 +34,8 @@
 
       <div class="header-inner">
 			<div class="header-title">
-				<h1>横浜ラーメン</h1>
-				<p>ピンを押してお店を確認</p>
+				<h1>横ラーダンジョン</h1>
+				<p id="completionStatus" class="header-progress"></p>
 			</div>
 
 			<div id="completionStatus" class="header-status"></div>

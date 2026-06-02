@@ -1430,6 +1430,54 @@ main {
 	color: #7a4f00;
 }
 
+.current-member-modal-content {
+	text-align: center;
+}
+
+.current-member-help {
+	font-size: 13px;
+	color: #666;
+	line-height: 1.6;
+}
+
+.current-member-select {
+	width: 100%;
+	margin-top: 12px;
+	padding: 12px;
+	border: 1px solid #ccc;
+	border-radius: 12px;
+	font-size: 16px;
+	background: white;
+}
+
+#saveCurrentMemberButton {
+	width: 100%;
+	margin-top: 14px;
+	padding: 12px;
+	border: none;
+	border-radius: 14px;
+	background: #d84315;
+	color: white;
+	font-size: 16px;
+	font-weight: 900;
+	cursor: pointer;
+}
+
+.current-member-highlight {
+	border: 2px solid #ffb300;
+	background:
+		radial-gradient(circle at top left, rgba(255, 193, 7, 0.22), transparent 38%),
+		linear-gradient(135deg, #ffffff, #fff8c4);
+	box-shadow:
+		0 0 12px rgba(255, 193, 7, 0.35),
+		0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.current-member-name {
+	font-weight: 1000;
+	color: #d84315;
+}
+
 @keyframes bowserSummonPig {
 	0% {
 		transform: scale(0.4) rotate(-20deg);

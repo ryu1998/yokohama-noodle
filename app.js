@@ -105,6 +105,10 @@ const conquestProgressModal = document.getElementById("conquestProgressModal");
 const closeConquestProgressModal = document.getElementById("closeConquestProgressModal");
 const conquestProgressContent = document.getElementById("conquestProgressContent");
 
+const currentMemberModal = document.getElementById("currentMemberModal");
+const currentMemberSelect = document.getElementById("currentMemberSelect");
+const saveCurrentMemberButton = document.getElementById("saveCurrentMemberButton");
+
 const bowserSummonModal = document.getElementById("bowserSummonModal");
 
 const MEMBER_STATUSES = [
@@ -121,6 +125,7 @@ let shops = [];
 let logs = [];
 let selectedShopId = null;
 let members = [];
+let currentMemberId = localStorage.getItem("currentMemberId");
 let isCoordinateMode = false;
 let mapZoom = 1;
 let mapPanX = 0;
@@ -162,6 +167,9 @@ async function init() {
 	renderMemberList();
 	renderAdminShopSelect();
 	renderAdminAreaSelect();
+	renderCurrentMemberSelect();
+	applyCurrentMemberToVisitForm();
+	showCurrentMemberModalIfNeeded();
 }
 
 // ==============================
@@ -574,6 +582,58 @@ function renderMemberSelect() {
 	if (selectedMember && visitorStatusInput) {
 		visitorStatusInput.value = selectedMember.status || "普通";
 	}
+
+	applyCurrentMemberToVisitForm();
+}
+
+function renderCurrentMemberSelect() {
+	if (!currentMemberSelect) return;
+
+	currentMemberSelect.innerHTML = `<option value="">メンバーを選択</option>`;
+
+	members.forEach((member) => {
+		const option = document.createElement("option");
+		option.value = member.id;
+		option.textContent = member.name;
+		currentMemberSelect.appendChild(option);
+	});
+
+	if (
+		currentMemberId &&
+		members.some((member) => String(member.id) === String(currentMemberId))
+	) {
+		currentMemberSelect.value = currentMemberId;
+	}
+}
+
+function showCurrentMemberModalIfNeeded() {
+	const exists = members.some(
+		(member) => String(member.id) === String(currentMemberId)
+	);
+
+	if (!exists) {
+		currentMemberModal.classList.remove("hidden");
+	}
+}
+
+function applyCurrentMemberToVisitForm() {
+	if (!currentMemberId) return;
+
+	const member = memberMap[String(currentMemberId)];
+	if (!member) return;
+
+	visitorNameInput.value = currentMemberId;
+	visitorNameInput.disabled = true;
+
+	if (visitorStatusInput) {
+		visitorStatusInput.value = member.status || "普通";
+	}
+
+	updateBowserCallButton();
+}
+
+function getCurrentMember() {
+	return memberMap[String(currentMemberId)];
 }
 
 function renderMemberList() {
@@ -582,15 +642,25 @@ function renderMemberList() {
 		return;
 	}
 
-	memberList.innerHTML = members
+	const sortedMembers = [...members].sort((a, b) => {
+		if (String(a.id) === String(currentMemberId)) return -1;
+		if (String(b.id) === String(currentMemberId)) return 1;
+		return 0;
+	});
+
+	memberList.innerHTML = sortedMembers
 		.map((member) => {
 			const status = member.status || "普通";
 			const statusInfo = MEMBER_STATUSES.find((item) => item.value === status);
 			const label = statusInfo?.label || `🙂 ${escapeHtml(status)}`;
+			const isCurrent = String(member.id) === String(currentMemberId);
 
 			return `
-				<div class="member-item member-status-display">
-					<span class="member-item-name">${escapeHtml(member.name)}</span>
+				<div class="member-item member-status-display ${isCurrent ? "current-member-highlight" : ""}">
+					<span class="member-item-name ${isCurrent ? "current-member-name" : ""}">
+						${escapeHtml(member.name)}
+						${isCurrent ? "（あなた）" : ""}
+					</span>
 					<span class="member-current-status">${label}</span>
 				</div>
 			`;
@@ -704,6 +774,7 @@ function renderRanking() {
 			).length;
 
 			return {
+				id: member.id,
 				name: member.name,
 				status: member.status || "普通",
 				count
@@ -719,13 +790,17 @@ function renderRanking() {
 	rankingList.innerHTML = ranking
 		.map((item, index) => {
 			const rankIcon = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}`;
+			const isCurrent = String(item.id) === String(currentMemberId);
 
 			return `
-				<div class="ranking-card ${index < 3 ? "top-rank" : ""}">
+				<div class="ranking-card ${index < 3 ? "top-rank" : ""} ${isCurrent ? "current-member-highlight" : ""}">
 					<div class="ranking-left">
 						<div class="ranking-rank-badge">${rankIcon}</div>
 						<div>
-							<div class="ranking-name">${escapeHtml(item.name)}</div>
+							<div class="ranking-name ${isCurrent ? "current-member-name" : ""}">
+								${escapeHtml(item.name)}
+								${isCurrent ? "（あなた）" : ""}
+							</div>
 							<div class="ranking-status">${escapeHtml(getStatusLabel(item.status))}</div>
 						</div>
 					</div>
@@ -770,7 +845,11 @@ function renderMemberRecords() {
 				latestShop
 			};
 		})
-		.sort((a, b) => b.count - a.count);
+		.sort((a, b) => {
+			if (String(a.member.id) === String(currentMemberId)) return -1;
+			if (String(b.member.id) === String(currentMemberId)) return 1;
+			return b.count - a.count;
+		});
 
 	memberRecordList.innerHTML = memberRecords
 		.map((record) => {
@@ -780,7 +859,7 @@ function renderMemberRecords() {
 				: "まだ訪問なし";
 
 			return `
-				<div class="member-record-card">
+				<div class="member-record-card ${String(record.member.id) === String(currentMemberId) ? "current-member-highlight" : ""}">
 					<div class="member-record-header">
 						<div>
 							<div class="member-record-name">${escapeHtml(record.member.name)}</div>
@@ -1225,6 +1304,27 @@ modal.addEventListener("click", (event) => {
 	if (event.target === modal) {
 		closeShopModal();
 	}
+});
+
+saveCurrentMemberButton.addEventListener("click", () => {
+	const selectedId = currentMemberSelect.value;
+
+	if (!selectedId) {
+		alert("メンバーを選択してください");
+		return;
+	}
+
+	currentMemberId = selectedId;
+	localStorage.setItem("currentMemberId", selectedId);
+
+	currentMemberModal.classList.add("hidden");
+
+	applyCurrentMemberToVisitForm();
+
+	renderMemberList();
+	renderMemberRecords();
+	renderRanking();
+	renderTabelog();
 });
 
 function closeShopModal() {
