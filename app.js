@@ -1396,30 +1396,32 @@ function renderAreaPolygons() {
 			total > 0 &&
 			visited === total;
 
-const displayColor =
-	isConquered
-		? "#FFD700"
-		: color;
+		const fillColor = color;
 
-const displayOpacity =
-	isConquered
-		? 0.7
-		: (
-			isSelectedArea
-				? Math.min(opacity + 0.15, 0.8)
-				: opacity
-		);
+		const fillOpacity =
+			isConquered
+				? 0.7
+				: (
+					isSelectedArea
+						? Math.min(opacity + 0.15, 0.8)
+						: opacity
+				);
 
-		polygon.setAttribute("fill", displayColor);
+		const strokeColor =
+			isConquered
+				? "#C9A227"
+				: color;
+
+		polygon.setAttribute("fill", fillColor);
 
 		polygon.setAttribute(
 			"fill-opacity",
-			displayOpacity.toFixed(2)
+			fillOpacity.toFixed(2)
 		);
 
 		polygon.setAttribute(
 			"stroke",
-			displayColor
+			strokeColor
 		);
 
 		polygon.setAttribute(
@@ -1758,6 +1760,16 @@ visitForm.addEventListener("submit", async (event) => {
 
 	if (!selectedShopId) return;
 
+	const submitButton =
+		visitForm.querySelector('button[type="submit"]');
+
+	const originalText =
+		submitButton.textContent;
+
+	submitButton.disabled = true;
+	submitButton.textContent = "登録中...";
+	submitButton.classList.add("submit-loading");
+
 	const visitorId = currentMemberId;
 	const visitorStatus = visitorStatusInput.value;
 	const ramenType = ramenTypeInput.value;
@@ -1876,10 +1888,14 @@ visitForm.addEventListener("submit", async (event) => {
 		}
 
 		alert("登録しました");
-	} catch (error) {
-		console.error(error);
-		alert("登録に失敗しました");
-	}
+		} catch (error) {
+			console.error(error);
+			alert("登録に失敗しました");
+		} finally {
+			submitButton.disabled = false;
+			submitButton.textContent = originalText;
+			submitButton.classList.remove("submit-loading");
+		}
 });
 
 async function uploadPhoto(shopId, visitorName, file) {
