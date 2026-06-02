@@ -580,10 +580,18 @@ function renderTabelog() {
 			if (log.log_type === "full_conquest") {
 				return `
 					<div class="tabelog-item tabelog-full-conquered">
-						<div class="tabelog-date">${formatShortDate(log.logged_at)}</div>
+						<div class="tabelog-date">
+							${formatShortDate(log.logged_at)}
+						</div>
+
 						<div class="tabelog-text">
-							<span class="tabelog-badge">🏆 完全制覇！</span>
-							<span>${escapeHtml(statusText)}</span>
+							<div class="tabelog-conquest-title">
+								🏆 完全制覇！
+							</div>
+
+							<div>
+								${escapeHtml(statusText)}
+							</div>
 						</div>
 					</div>
 				`;
@@ -592,10 +600,18 @@ function renderTabelog() {
 			if (log.log_type === "area_conquest") {
 				return `
 					<div class="tabelog-item tabelog-conquered">
-						<div class="tabelog-date">${formatShortDate(log.logged_at)}</div>
+						<div class="tabelog-date">
+							${formatShortDate(log.logged_at)}
+						</div>
+
 						<div class="tabelog-text">
-							<span class="tabelog-badge">👑 ${escapeHtml(log.area_name || "エリア")} 制覇！</span>
-							<span>${escapeHtml(statusText)}</span>
+							<div class="tabelog-conquest-title">
+								👑 ${escapeHtml(log.area_name || "エリア")} 制覇！
+							</div>
+
+							<div>
+								${escapeHtml(statusText)}
+							</div>
 						</div>
 					</div>
 				`;
@@ -605,12 +621,20 @@ function renderTabelog() {
 
 			return `
 				<div class="tabelog-item">
-					<div class="tabelog-date">${formatShortDate(log.logged_at)}</div>
+					<div class="tabelog-date">
+						${formatShortDate(log.logged_at)}
+					</div>
+
 					<div class="tabelog-text">
-						<span>${escapeHtml(log.shop_name || "店舗")}</span>
-						<span>${escapeHtml(log.member_name || "未登録")}</span>
-						<span>${escapeHtml(statusLabel)}</span>
-						<span>訪問</span>
+						<div class="tabelog-shop-name">
+							${escapeHtml(log.shop_name || "店舗")}
+						</div>
+
+						<div>
+							${escapeHtml(log.member_name || "未登録")}
+							&nbsp;
+							${escapeHtml(statusLabel)}
+						</div>
 					</div>
 				</div>
 			`;
