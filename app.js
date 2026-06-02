@@ -105,6 +105,8 @@ const conquestProgressModal = document.getElementById("conquestProgressModal");
 const closeConquestProgressModal = document.getElementById("closeConquestProgressModal");
 const conquestProgressContent = document.getElementById("conquestProgressContent");
 
+const bowserSummonModal = document.getElementById("bowserSummonModal");
+
 const MEMBER_STATUSES = [
 	{ value: "余裕", label: "😋 余裕" },
 	{ value: "普通", label: "🙂 普通" },
@@ -1184,16 +1186,30 @@ confirmBowserCall.addEventListener("click", async () => {
 
 		await insertBowserLog(shop, member, calledAt);
 
-		window.location.href = `tel:${BOWSER_PHONE_NUMBER}`;
-
-		await loadMembers();
-		await loadLogs();
-
-		renderMemberSelect();
-		renderMemberList();
-		updateBowserCallButton();
-
+		// 店舗は選択状態のまま、モーダルはいったん全部閉じて地図画面に戻す
+		selectedShopId = shop.id;
 		closeBowserModal();
+		closeShopModal();
+
+		renderPins();
+		renderShopList();
+		focusShopOnMap(shop.id);
+
+		// 召喚演出を表示
+		bowserSummonModal.classList.remove("hidden");
+
+		setTimeout(async () => {
+			bowserSummonModal.classList.add("hidden");
+
+			window.location.href = `tel:${BOWSER_PHONE_NUMBER}`;
+
+			await loadMembers();
+			await loadLogs();
+
+			renderMemberSelect();
+			renderMemberList();
+			updateBowserCallButton();
+		}, 1200);
 	} catch (error) {
 		console.error(error);
 		alert("バウザー召喚に失敗しました");
