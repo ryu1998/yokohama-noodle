@@ -24,6 +24,8 @@ let memberMap = {};
 const pinLayer = document.getElementById("pinLayer");
 const shopList = document.getElementById("shopList");
 const completionStatus = document.getElementById("completionStatus");
+const currentMemberHeader = document.getElementById("currentMemberHeader");
+const visitorNameText = document.getElementById("visitorNameText");
 
 const modal = document.getElementById("modal");
 const closeModal = document.getElementById("closeModal");
@@ -31,7 +33,6 @@ const modalShopName = document.getElementById("modalShopName");
 const visitHistory = document.getElementById("visitHistory");
 const visitForm = document.getElementById("visitForm");
 
-const visitorNameInput = document.getElementById("visitorName");
 const visitorStatusInput = document.getElementById("visitorStatus");
 const commentInput = document.getElementById("comment");
 const photoInput = document.getElementById("photoInput");
@@ -481,7 +482,26 @@ function renderCompletionStatus() {
 	const visitedShops = shops.filter((shop) => shop.status === "visited").length;
 	const percent = totalShops === 0 ? 0 : Math.round((visitedShops / totalShops) * 100);
 
-	completionStatus.textContent = `訪問済：\n${visitedShops}/${totalShops} 店舗\n(${percent}%)`;
+	completionStatus.textContent =
+		`訪問済：${visitedShops}/${totalShops} 店舗（${percent}%）`;
+
+	renderCurrentMemberHeader();
+}
+
+function renderCurrentMemberHeader() {
+	if (!currentMemberHeader) return;
+
+	const member = getCurrentMember();
+
+	if (!member) {
+		currentMemberHeader.textContent = "未選択";
+		return;
+	}
+
+	currentMemberHeader.innerHTML = `
+		<span class="header-member-label">PLAYER</span>
+		<span class="header-member-name">${escapeHtml(member.name)}</span>
+	`;
 }
 
 function renderAdminShopSelect() {
@@ -569,20 +589,6 @@ function renderVisitHistory(shop) {
 }
 
 function renderMemberSelect() {
-	visitorNameInput.innerHTML = `<option value="">メンバーを選択</option>`;
-
-	members.forEach((member) => {
-		const option = document.createElement("option");
-		option.value = member.id;
-		option.textContent = member.name;
-		visitorNameInput.appendChild(option);
-	});
-
-	const selectedMember = memberMap[String(visitorNameInput.value)];
-	if (selectedMember && visitorStatusInput) {
-		visitorStatusInput.value = selectedMember.status || "普通";
-	}
-
 	applyCurrentMemberToVisitForm();
 }
 
@@ -617,18 +623,25 @@ function showCurrentMemberModalIfNeeded() {
 }
 
 function applyCurrentMemberToVisitForm() {
-	if (!currentMemberId) return;
+	const member = getCurrentMember();
 
-	const member = memberMap[String(currentMemberId)];
-	if (!member) return;
+	if (!member) {
+		if (visitorNameText) {
+			visitorNameText.textContent = "メンバー未選択";
+		}
 
-	visitorNameInput.value = currentMemberId;
-	visitorNameInput.disabled = true;
+		return;
+	}
+
+	if (visitorNameText) {
+		visitorNameText.textContent = member.name;
+	}
 
 	if (visitorStatusInput) {
 		visitorStatusInput.value = member.status || "普通";
 	}
 
+	renderCurrentMemberHeader();
 	updateBowserCallButton();
 }
 
@@ -729,7 +742,7 @@ function renderTabelog() {
 
 						<div class="tabelog-text">
 							<div class="tabelog-conquest-title">
-								🐷 バウザー召喚！
+								🐷 バウザーコール！
 							</div>
 
 							<div>
@@ -1126,16 +1139,6 @@ toggleCoordinateModeButton.addEventListener("click", () => {
 	mapWrapper.classList.toggle("coordinate-mode", isCoordinateMode);
 });
 
-visitorNameInput.addEventListener("change", () => {
-	const selectedMember = memberMap[String(visitorNameInput.value)];
-
-	if (!selectedMember || !visitorStatusInput) return;
-
-	visitorStatusInput.value = selectedMember.status || "普通";
-
-	updateBowserCallButton();
-});
-
 mapWrapper.addEventListener("click", async (event) => {
 	if (hasMapMoved) {
 		hasMapMoved = false;
@@ -1239,7 +1242,7 @@ bowserConfirmModal.addEventListener("click", (event) => {
 });
 
 confirmBowserCall.addEventListener("click", async () => {
-	const memberId = visitorNameInput.value;
+	const memberId = currentMemberId;
 	const member = memberMap[String(memberId)];
 	const shop = shops.find((s) => String(s.id) === String(selectedShopId));
 
@@ -1291,7 +1294,7 @@ confirmBowserCall.addEventListener("click", async () => {
 		}, 1200);
 	} catch (error) {
 		console.error(error);
-		alert("バウザー召喚に失敗しました");
+		alert("バウザーコールに失敗しました");
 	} finally {
 		confirmBowserCall.disabled = false;
 		confirmBowserCall.textContent = "🐷 召喚する";
@@ -1320,6 +1323,7 @@ saveCurrentMemberButton.addEventListener("click", () => {
 	currentMemberModal.classList.add("hidden");
 
 	applyCurrentMemberToVisitForm();
+	renderCurrentMemberHeader();
 
 	renderMemberList();
 	renderMemberRecords();
@@ -1367,7 +1371,7 @@ visitForm.addEventListener("submit", async (event) => {
 
 	if (!selectedShopId) return;
 
-	const visitorId = visitorNameInput.value;
+	const visitorId = currentMemberId;
 	const visitorStatus = visitorStatusInput.value;
 	const comment = commentInput.value.trim();
 	const file = photoInput.files[0];
@@ -1576,7 +1580,7 @@ function getStatusLabel(status) {
 function updateBowserCallButton() {
 	if (!bowserCallButton) return;
 
-	const selectedMember = memberMap[String(visitorNameInput.value)];
+	const selectedMember = getCurrentMember();
 
 	if (!selectedMember) {
 		bowserCallButton.disabled = true;
@@ -1598,16 +1602,16 @@ function updateBowserCallButton() {
 }
 
 function openBowserConfirmModal() {
-	const selectedMember = memberMap[String(visitorNameInput.value)];
+	const selectedMember = getCurrentMember();
 
 	if (!selectedMember) {
-		visitError.textContent = "バウザー召喚するメンバーを選択してください。";
+		visitError.textContent = "バウザーコールするメンバーを選択してください。";
 		visitError.classList.remove("hidden");
 		return;
 	}
 
 	if (selectedMember.bowser_called_at) {
-		visitError.textContent = "このメンバーはすでにバウザー召喚済みです。";
+		visitError.textContent = "このメンバーはすでにバウザーコール済みです。";
 		visitError.classList.remove("hidden");
 		return;
 	}

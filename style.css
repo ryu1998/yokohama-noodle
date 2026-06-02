@@ -412,6 +412,71 @@ main {
 	white-space: nowrap;
 }
 
+.app-header {
+	padding: 12px 12px 14px;
+	background:
+		radial-gradient(circle at top left, rgba(255, 255, 255, 0.28), transparent 34%),
+		linear-gradient(135deg, #ff9800, #e65100 62%, #bf360c);
+}
+
+.header-inner {
+	min-height: 54px;
+}
+
+.header-title {
+	gap: 3px;
+	padding: 0 104px;
+	min-width: 0;
+}
+
+.header-title h1 {
+	font-size: 21px;
+	line-height: 1.1;
+	white-space: nowrap;
+}
+
+.header-progress {
+	margin: 0;
+	font-size: 12px;
+	font-weight: 800;
+	color: rgba(255, 255, 255, 0.92);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.header-status {
+	min-width: 72px;
+	max-width: 96px;
+	padding: 5px 8px;
+	border: 1px solid rgba(255, 255, 255, 0.36);
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.18);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+	backdrop-filter: blur(8px);
+	text-align: center;
+	overflow: hidden;
+}
+
+.header-member-label {
+	display: block;
+	font-size: 9px;
+	line-height: 1;
+	letter-spacing: 0.08em;
+	opacity: 0.78;
+}
+
+.header-member-name {
+	display: block;
+	margin-top: 2px;
+	font-size: 12px;
+	font-weight: 900;
+	line-height: 1.1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 .admin-field {
 	display: grid;
 	gap: 6px;
@@ -553,7 +618,7 @@ main {
 }
 
 .menu-content h2 {
-	margin: 0 0 20px;
+	margin: 0 44px 20px 0;
 	font-size: 22px;
 	color: #333;
 }
@@ -574,7 +639,7 @@ main {
 }
 
 .admin-menu-area {
-	margin-top: auto;
+	margin-top: 28px;
 	padding-top: 20px;
 	border-top: 1px solid #ddd;
 }
@@ -1478,6 +1543,43 @@ main {
 	color: #d84315;
 }
 
+.fixed-visitor-name {
+	width: 100%;
+	padding: 11px 12px;
+	border: 1px solid #ffe0b2;
+	border-radius: 12px;
+	background:
+		radial-gradient(circle at top left, rgba(255, 193, 7, 0.18), transparent 36%),
+		linear-gradient(135deg, #ffffff, #fff8f0);
+	color: #d84315;
+	font-size: 16px;
+	font-weight: 900;
+}
+
+.menu-content > .close-button {
+	position: absolute;
+	top: 18px;
+	right: 16px;
+
+	width: 36px;
+	height: 36px;
+	margin-left: 0;
+
+	display: grid;
+	place-items: center;
+
+	border: none;
+	border-radius: 50%;
+	background: #eeeeee;
+
+	color: #333;
+	font-size: 22px;
+	font-weight: 900;
+	line-height: 1;
+
+	z-index: 5;
+}
+
 @keyframes bowserSummonPig {
 	0% {
 		transform: scale(0.4) rotate(-20deg);
@@ -1558,6 +1660,28 @@ main {
 	.tabelog-conquest-title {
 		font-weight: 900;
 		margin-bottom: 2px;
+	}
+
+	.header-title {
+		padding: 0 82px;
+	}
+
+	.header-title h1 {
+		font-size: 18px;
+	}
+
+	.header-progress {
+		font-size: 11px;
+	}
+
+	.header-status {
+		right: 10px;
+		max-width: 76px;
+		padding: 5px 6px;
+	}
+
+	.header-member-name {
+		font-size: 11px;
 	}
 }
 
