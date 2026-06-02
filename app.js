@@ -499,7 +499,7 @@ function renderCurrentMemberHeader() {
 	}
 
 	currentMemberHeader.innerHTML = `
-		<span class="header-member-label">PLAYER</span>
+		<span class="header-member-label">PLAYER：</span>
 		<span class="header-member-name">${escapeHtml(member.name)}</span>
 	`;
 }
@@ -612,14 +612,22 @@ function renderCurrentMemberSelect() {
 	}
 }
 
-function showCurrentMemberModalIfNeeded() {
-	const exists = members.some(
-		(member) => String(member.id) === String(currentMemberId)
-	);
+//localStorage保存用
 
-	if (!exists) {
-		currentMemberModal.classList.remove("hidden");
-	}
+//function showCurrentMemberModalIfNeeded() {
+//	const exists = members.some(
+//		(member) => String(member.id) === String(currentMemberId)
+//	);
+
+//	if (!exists) {
+//		currentMemberModal.classList.remove("hidden");
+//	}
+//}
+
+function showCurrentMemberModalIfNeeded() {
+	if (!currentMemberModal) return;
+
+	currentMemberModal.classList.remove("hidden");
 }
 
 function applyCurrentMemberToVisitForm() {
