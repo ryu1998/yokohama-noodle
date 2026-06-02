@@ -34,6 +34,7 @@ const visitHistory = document.getElementById("visitHistory");
 const visitForm = document.getElementById("visitForm");
 
 const visitorStatusInput = document.getElementById("visitorStatus");
+const ramenTypeInput = document.getElementById("ramenType");
 const commentInput = document.getElementById("comment");
 const photoInput = document.getElementById("photoInput");
 const visitError = document.getElementById("visitError");
@@ -114,12 +115,42 @@ const changeCurrentMemberButton = document.getElementById("changeCurrentMemberBu
 
 const bowserSummonModal = document.getElementById("bowserSummonModal");
 
+const openRamenTypeModal =	document.getElementById("openRamenTypeModal");
+const ramenTypeModal = document.getElementById("ramenTypeModal");
+const closeRamenTypeModal = document.getElementById("closeRamenTypeModal");
+const ramenTypeList = document.getElementById("ramenTypeList");
+
 const MEMBER_STATUSES = [
 	{ value: "余裕", label: "😋 余裕" },
 	{ value: "普通", label: "🙂 普通" },
 	{ value: "腹八分目", label: "😐 腹八分目" },
 	{ value: "限界", label: "🤢 限界" },
 	{ value: "撃沈", label: "💀 撃沈" }
+];
+
+const RAMEN_TYPES = [
+	"家系",
+	"二郎系",
+	"豚骨",
+	"豚骨醤油",
+	"醤油",
+	"塩",
+	"味噌",
+	"煮干し",
+	"魚介",
+	"鶏白湯",
+	"担々麺",
+	"油そば",
+	"まぜそば",
+	"つけ麺",
+	"ちゃんぽん",
+	"台湾ラーメン",
+	"喜多方",
+	"佐野",
+	"博多",
+	"札幌味噌",
+	"旭川",
+	"その他"
 ];
 
 const BOWSER_PHONE_NUMBER = "09091799052";
@@ -171,6 +202,7 @@ async function init() {
 	renderAdminShopSelect();
 	renderAdminAreaSelect();
 	renderCurrentMemberSelect();
+	renderRamenTypeSelect();
 	applyCurrentMemberToVisitForm();
 	showCurrentMemberModalIfNeeded();
 }
@@ -506,6 +538,40 @@ function renderCurrentMemberHeader() {
 	`;
 }
 
+function renderRamenTypeStats() {
+
+	const counts = {};
+
+	shops
+		.filter(shop => shop.status === "visited")
+		.forEach(shop => {
+
+			const type =
+				shop.ramen_type || "未分類";
+
+			counts[type] =
+				(counts[type] || 0) + 1;
+		});
+
+	const html =
+		Object.entries(counts)
+		.sort((a,b) => b[1]-a[1])
+		.map(([type,count]) => `
+			<div class="ranking-card">
+				<div>
+					🍜 ${type}
+				</div>
+				<div>
+					${count}店舗
+				</div>
+			</div>
+		`)
+		.join("");
+
+	ramenTypeList.innerHTML =
+		html || "<p>まだ記録がありません</p>";
+}
+
 function renderAdminShopSelect() {
 	if (!adminShopSelect) return;
 
@@ -580,6 +646,7 @@ function renderVisitHistory(shop) {
 				<span class="visit-item-status">${visitorStatusLabel}</span>
 			</div>
 			<div class="visit-item-date">${dateText}</div>
+			<div>🍜 ${escapeHtml(shop.ramen_type || "不明")}</div>
 			<p>${escapeHtml(shop.comment || "")}</p>
 			${
 				shop.photo_url
@@ -681,6 +748,20 @@ function renderMemberList() {
 			`;
 		})
 		.join("");
+}
+
+function renderRamenTypeSelect() {
+	if (!ramenTypeInput) return;
+
+	ramenTypeInput.innerHTML =
+		'<option value="">種類を選択</option>';
+
+	RAMEN_TYPES.forEach(type => {
+		const option = document.createElement("option");
+		option.value = type;
+		option.textContent = type;
+		ramenTypeInput.appendChild(option);
+	});
 }
 
 function renderTabelog() {
@@ -1346,6 +1427,24 @@ saveCurrentMemberButton.addEventListener("click", () => {
 	renderTabelog();
 });
 
+openRamenTypeModal.addEventListener(
+	"click",
+	() => {
+		menuModal.classList.add("hidden");
+
+		renderRamenTypeStats();
+
+		ramenTypeModal.classList.remove("hidden");
+	}
+);
+
+closeRamenTypeModal.addEventListener(
+	"click",
+	() => {
+		ramenTypeModal.classList.add("hidden");
+	}
+);
+
 function closeShopModal() {
 	modal.classList.add("hidden");
 }
@@ -1388,11 +1487,12 @@ visitForm.addEventListener("submit", async (event) => {
 
 	const visitorId = currentMemberId;
 	const visitorStatus = visitorStatusInput.value;
+	const ramenType = ramenTypeInput.value;
 	const comment = commentInput.value.trim();
 	const file = photoInput.files[0];
 
-	if (!visitorId || !visitorStatus || !file) {
-		visitError.textContent = "メンバー、状態、写真を選択してください。";
+	if (!visitorId || !visitorStatus || !ramenType || !file) {
+		visitError.textContent = "メンバー、状態、ラーメン種別、写真を選択してください。";
 		visitError.classList.remove("hidden");
 		return;
 	}
@@ -1431,6 +1531,7 @@ visitForm.addEventListener("submit", async (event) => {
 				status: "visited",
 				visitor_id: visitorId,
 				visitor_status: visitorStatus,
+				ramen_type: ramenType,
 				comment,
 				photo_url: photoUrl,
 				created_at: loggedAt
@@ -1448,7 +1549,7 @@ visitForm.addEventListener("submit", async (event) => {
 
 		if (memberUpdateError) throw memberUpdateError;
 
-		await insertVisitLog(targetShop, visitorId, visitorStatus, loggedAt);
+		await insertVisitLog(targetShop, visitorId, visitorStatus, ramenType, loggedAt);
 
 		await insertConquestLogIfNeeded(
 			targetShop.area_id,
@@ -1683,6 +1784,7 @@ function buildUpdatedShopsAfterVisit(shopId, visitorId, visitorStatus, comment, 
 				status: "visited",
 				visitor_id: visitorId,
 				visitor_status: visitorStatus,
+				ramen_type: ramenType,
 				comment,
 				photo_url: photoUrl,
 				created_at: loggedAt
@@ -1691,7 +1793,7 @@ function buildUpdatedShopsAfterVisit(shopId, visitorId, visitorStatus, comment, 
 	);
 }
 
-async function insertVisitLog(shop, visitorId, visitorStatus, loggedAt) {
+async function insertVisitLog(shop, visitorId, visitorStatus, ramenType, loggedAt) {
 	const member = memberMap[String(visitorId)];
 
 	const { error } = await supabaseClient

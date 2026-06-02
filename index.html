@@ -99,6 +99,12 @@
 				</label>
 
 				<label>
+					ラーメン種別
+					<select id="ramenType" required>
+					</select>
+				</label>
+
+				<label>
 					コメント
 					<textarea id="comment" placeholder="例：家系で一番好き"></textarea>
 				</label>
@@ -145,6 +151,7 @@
 				<button id="openConquestProgressModal" class="menu-item-button">制覇メーター</button>
 				<button id="openMemberRecordModal" class="menu-item-button">個人戦績</button>
 				<button id="openRecordModal" class="menu-item-button">杯数ランキング</button>
+				<button id="openRamenTypeModal" class="menu-item-button">ラーメン統計</button>
 				<button id="openTabelogModal" class="menu-item-button">食べログ</button>
 			</div>
 
@@ -226,6 +233,20 @@
 			<div id="conquestProgressContent" class="conquest-progress-content"></div>
       </div>
    </div>
+
+	<div id="ramenTypeModal" class="modal hidden">
+		<div class="modal-content">
+			<button
+				id="closeRamenTypeModal"
+				class="close-button">
+				×
+			</button>
+
+			<h2>ラーメン統計</h2>
+
+			<div id="ramenTypeList"></div>
+		</div>
+	</div>
 
 	<!-- Admin modal -->
 	<div id="adminModal" class="modal hidden">

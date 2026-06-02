@@ -1080,6 +1080,10 @@ main {
 	content: "👤";
 }
 
+#openRamenTypeModal::before {
+	content: "🍜";
+}
+
 .ranking-list,
 .member-record-list,
 .conquest-progress-content {
