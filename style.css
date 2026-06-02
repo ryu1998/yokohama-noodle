@@ -603,17 +603,12 @@ main {
 	width: 82%;
 	max-width: 340px;
 	height: 100%;
-
-	padding: 28px 18px;
-
+	padding: 22px 16px;
 	background: linear-gradient(180deg, #ffffff, #fff8f0);
 	box-shadow: 8px 0 24px rgba(0, 0, 0, 0.22);
-
 	border-radius: 0 24px 24px 0;
-
 	display: flex;
 	flex-direction: column;
-
 	overflow-y: auto;
 	-webkit-overflow-scrolling: touch;
 }
@@ -626,16 +621,16 @@ main {
 
 .menu-item-button {
 	width: 100%;
-	margin-top: 12px;
-	padding: 16px 14px;
+	margin-top: 8px;
+	padding: 12px 12px;
 	border: 1px solid #ffe0b2;
-	border-radius: 16px;
+	border-radius: 14px;
 	background: white;
-	font-size: 16px;
+	font-size: 14px;
 	font-weight: 800;
 	text-align: left;
 	color: #333;
-	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
 	cursor: pointer;
 }
 
@@ -1060,8 +1055,8 @@ main {
 
 .menu-section {
 	display: grid;
-	gap: 8px;
-	margin-top: 18px;
+	gap: 4px;
+	margin-top: 12px;
 }
 
 .menu-section-title {
@@ -1079,6 +1074,10 @@ main {
 
 #openConquestProgressModal::before {
 	content: "📊";
+}
+
+#changeCurrentMemberButton::before {
+	content: "👤";
 }
 
 .ranking-list,

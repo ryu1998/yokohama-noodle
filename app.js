@@ -110,6 +110,8 @@ const currentMemberModal = document.getElementById("currentMemberModal");
 const currentMemberSelect = document.getElementById("currentMemberSelect");
 const saveCurrentMemberButton = document.getElementById("saveCurrentMemberButton");
 
+const changeCurrentMemberButton = document.getElementById("changeCurrentMemberButton");
+
 const bowserSummonModal = document.getElementById("bowserSummonModal");
 
 const MEMBER_STATUSES = [
@@ -126,7 +128,7 @@ let shops = [];
 let logs = [];
 let selectedShopId = null;
 let members = [];
-let currentMemberId = localStorage.getItem("currentMemberId");
+let currentMemberId = sessionStorage.getItem("currentMemberId");
 let isCoordinateMode = false;
 let mapZoom = 1;
 let mapPanX = 0;
@@ -612,22 +614,14 @@ function renderCurrentMemberSelect() {
 	}
 }
 
-//localStorage保存用
-
-//function showCurrentMemberModalIfNeeded() {
-//	const exists = members.some(
-//		(member) => String(member.id) === String(currentMemberId)
-//	);
-
-//	if (!exists) {
-//		currentMemberModal.classList.remove("hidden");
-//	}
-//}
-
 function showCurrentMemberModalIfNeeded() {
-	if (!currentMemberModal) return;
+	const exists = members.some(
+		(member) => String(member.id) === String(currentMemberId)
+	);
 
-	currentMemberModal.classList.remove("hidden");
+	if (!exists) {
+		currentMemberModal.classList.remove("hidden");
+	}
 }
 
 function applyCurrentMemberToVisitForm() {
@@ -1064,6 +1058,19 @@ menuModal.addEventListener("click", (event) => {
 	}
 });
 
+changeCurrentMemberButton.addEventListener("click", () => {
+	menuModal.classList.add("hidden");
+
+	currentMemberId = null;
+	sessionStorage.removeItem("currentMemberId");
+
+	renderCurrentMemberSelect();
+	applyCurrentMemberToVisitForm();
+	renderCurrentMemberHeader();
+
+	currentMemberModal.classList.remove("hidden");
+});
+
 openAddMemberModal.addEventListener("click", () => {
 	menuModal.classList.add("hidden");
 	addMemberModal.classList.remove("hidden");
@@ -1326,7 +1333,7 @@ saveCurrentMemberButton.addEventListener("click", () => {
 	}
 
 	currentMemberId = selectedId;
-	localStorage.setItem("currentMemberId", selectedId);
+	sessionStorage.setItem("currentMemberId", selectedId);
 
 	currentMemberModal.classList.add("hidden");
 
