@@ -37,6 +37,12 @@ const commentInput = document.getElementById("comment");
 const photoInput = document.getElementById("photoInput");
 const visitError = document.getElementById("visitError");
 
+const bowserCallButton = document.getElementById("bowserCallButton");
+const bowserConfirmModal = document.getElementById("bowserConfirmModal");
+const closeBowserConfirmModal = document.getElementById("closeBowserConfirmModal");
+const cancelBowserCall = document.getElementById("cancelBowserCall");
+const confirmBowserCall = document.getElementById("confirmBowserCall");
+
 const menuButton = document.getElementById("menuButton");
 const menuModal = document.getElementById("menuModal");
 const closeMenu = document.getElementById("closeMenu");
@@ -106,6 +112,8 @@ const MEMBER_STATUSES = [
 	{ value: "限界", label: "🤢 限界" },
 	{ value: "撃沈", label: "💀 撃沈" }
 ];
+
+const BOWSER_PHONE_NUMBER = "09091799052";
 
 let shops = [];
 let logs = [];
@@ -312,7 +320,17 @@ function renderShopList() {
 		return groups;
 	}, {});
 
-	Object.values(groupedShops).forEach((group) => {
+	Object.values(groupedShops)
+	.sort((a, b) => {
+		const areaA = areaMap[String(a.id)];
+		const areaB = areaMap[String(b.id)];
+
+		return (
+			(areaA?.display_order ?? 999) -
+			(areaB?.display_order ?? 999)
+		);
+	})
+	.forEach((group) => {
 		const totalCount = group.shops.length;
 
 		const visitedCount = group.shops.filter(
@@ -462,18 +480,31 @@ function renderAdminShopSelect() {
 	const currentValue = adminShopSelect.value;
 	adminShopSelect.innerHTML = `<option value="">店舗を選択</option>`;
 
-	shops.forEach((shop) => {
+	const sortedShops = [...shops].sort((a, b) => {
+		if (a.area_id !== b.area_id) {
+			return a.area_id - b.area_id;
+		}
+
+		return a.id - b.id;
+	});
+
+	sortedShops.forEach((shop) => {
 		const option = document.createElement("option");
 		option.value = shop.id;
 
 		const x = shop.x ?? "-";
 		const y = shop.y ?? "-";
-		option.textContent = `${shop.shop_name}（現在: ${x}, ${y}）`;
+
+		option.textContent =
+			`${shop.shop_name}（現在: ${x}, ${y}）`;
 
 		adminShopSelect.appendChild(option);
 	});
 
-	if (currentValue && shops.some((shop) => String(shop.id) === String(currentValue))) {
+	if (
+		currentValue &&
+		shops.some((shop) => String(shop.id) === String(currentValue))
+	) {
 		adminShopSelect.value = currentValue;
 	}
 }
@@ -611,6 +642,27 @@ function renderTabelog() {
 
 							<div>
 								${escapeHtml(statusText)}
+							</div>
+						</div>
+					</div>
+				`;
+			}
+
+			if (log.log_type === "bowser_call") {
+				return `
+					<div class="tabelog-item tabelog-bowser">
+						<div class="tabelog-date">
+							${formatShortDate(log.logged_at)}
+						</div>
+
+						<div class="tabelog-text">
+							<div class="tabelog-conquest-title">
+								🐷 バウザー召喚！
+							</div>
+
+							<div>
+								${escapeHtml(log.member_name || "メンバー")} が
+								${escapeHtml(log.shop_name || "店舗")} で禁断の召喚を発動
 							</div>
 						</div>
 					</div>
@@ -891,6 +943,8 @@ function openShopModal(shopId) {
 		visitForm.classList.remove("hidden");
 	}
 
+	updateBowserCallButton();
+
 	modal.classList.remove("hidden");
 }
 
@@ -997,6 +1051,8 @@ visitorNameInput.addEventListener("change", () => {
 	if (!selectedMember || !visitorStatusInput) return;
 
 	visitorStatusInput.value = selectedMember.status || "普通";
+
+	updateBowserCallButton();
 });
 
 mapWrapper.addEventListener("click", async (event) => {
@@ -1087,6 +1143,63 @@ mapWrapper.addEventListener("click", async (event) => {
 		console.error(error);
 		adminUpdateStatus.textContent = "座標更新に失敗しました";
 		adminUpdateStatus.className = "admin-status error";
+	}
+});
+
+bowserCallButton.addEventListener("click", openBowserConfirmModal);
+
+closeBowserConfirmModal.addEventListener("click", closeBowserModal);
+cancelBowserCall.addEventListener("click", closeBowserModal);
+
+bowserConfirmModal.addEventListener("click", (event) => {
+	if (event.target === bowserConfirmModal) {
+		closeBowserModal();
+	}
+});
+
+confirmBowserCall.addEventListener("click", async () => {
+	const memberId = visitorNameInput.value;
+	const member = memberMap[String(memberId)];
+	const shop = shops.find((s) => String(s.id) === String(selectedShopId));
+
+	if (!member || !shop) return;
+
+	const calledAt = new Date().toISOString();
+
+	try {
+		confirmBowserCall.disabled = true;
+		confirmBowserCall.textContent = "召喚中...";
+
+		const { error: memberError } = await supabaseClient
+			.from(MEMBER_TABLE_NAME)
+			.update({
+				bowser_called_at: calledAt,
+				bowser_called_shop_id: shop.id,
+				bowser_called_shop_name: shop.shop_name
+			})
+			.eq("id", memberId)
+			.is("bowser_called_at", null);
+
+		if (memberError) throw memberError;
+
+		await insertBowserLog(shop, member, calledAt);
+
+		window.location.href = `tel:${BOWSER_PHONE_NUMBER}`;
+
+		await loadMembers();
+		await loadLogs();
+
+		renderMemberSelect();
+		renderMemberList();
+		updateBowserCallButton();
+
+		closeBowserModal();
+	} catch (error) {
+		console.error(error);
+		alert("バウザー召喚に失敗しました");
+	} finally {
+		confirmBowserCall.disabled = false;
+		confirmBowserCall.textContent = "🐷 召喚する";
 	}
 });
 
@@ -1344,6 +1457,52 @@ function getStatusLabel(status) {
 	return MEMBER_STATUSES.find((item) => item.value === status)?.label || status || "🙂 普通";
 }
 
+function updateBowserCallButton() {
+	if (!bowserCallButton) return;
+
+	const selectedMember = memberMap[String(visitorNameInput.value)];
+
+	if (!selectedMember) {
+		bowserCallButton.disabled = true;
+		bowserCallButton.classList.add("used");
+		bowserCallButton.querySelector("small").textContent = "先にメンバーを選択してください";
+		return;
+	}
+
+	if (selectedMember.bowser_called_at) {
+		bowserCallButton.disabled = true;
+		bowserCallButton.classList.add("used");
+		bowserCallButton.querySelector("small").textContent = "このメンバーは召喚済み";
+		return;
+	}
+
+	bowserCallButton.disabled = false;
+	bowserCallButton.classList.remove("used");
+	bowserCallButton.querySelector("small").textContent = "1人1回だけ使える禁断のコール";
+}
+
+function openBowserConfirmModal() {
+	const selectedMember = memberMap[String(visitorNameInput.value)];
+
+	if (!selectedMember) {
+		visitError.textContent = "バウザー召喚するメンバーを選択してください。";
+		visitError.classList.remove("hidden");
+		return;
+	}
+
+	if (selectedMember.bowser_called_at) {
+		visitError.textContent = "このメンバーはすでにバウザー召喚済みです。";
+		visitError.classList.remove("hidden");
+		return;
+	}
+
+	bowserConfirmModal.classList.remove("hidden");
+}
+
+function closeBowserModal() {
+	bowserConfirmModal.classList.add("hidden");
+}
+
 function countMemberStatuses(targetMembers) {
 	return targetMembers.reduce((counts, member) => {
 		const status = member.status || "普通";
@@ -1411,6 +1570,24 @@ async function insertVisitLog(shop, visitorId, visitorStatus, loggedAt) {
 			member_id: visitorId,
 			member_name: member?.name || "",
 			visitor_status: visitorStatus,
+			logged_at: loggedAt
+		});
+
+	if (error) throw error;
+}
+
+async function insertBowserLog(shop, member, loggedAt) {
+	const { error } = await supabaseClient
+		.from(LOG_TABLE_NAME)
+		.insert({
+			log_type: "bowser_call",
+			shop_id: shop.id,
+			shop_name: shop.shop_name,
+			area_id: shop.area_id,
+			area_name: shop.area_name,
+			member_id: member.id,
+			member_name: member.name,
+			visitor_status: member.status || "普通",
 			logged_at: loggedAt
 		});
 

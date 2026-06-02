@@ -87,6 +87,18 @@
 
 				<div id="visitError" class="form-error hidden"></div>
 
+				<button
+					type="button"
+					id="bowserCallButton"
+					class="bowser-call-button"
+				>
+					<span class="bowser-call-icon">🐷</span>
+					<span>
+						バウザー召喚
+						<small>1人1回だけ使える禁断のコール</small>
+					</span>
+				</button>
+
 				<button type="submit">行った記録を登録</button>
 			</form>
       </div>
@@ -277,6 +289,28 @@
 			<div class="complete-conquest-subtitle">横浜ラーメン制覇達成！</div>
 			<div class="complete-conquest-message">
 				全店舗訪問完了。お疲れさまでした 🍜👑
+			</div>
+		</div>
+	</div>
+
+	<div id="bowserConfirmModal" class="modal hidden">
+		<div class="modal-content bowser-modal-content">
+			<button id="closeBowserConfirmModal" class="close-button">×</button>
+
+			<div class="bowser-modal-icon">🐷</div>
+			<div class="bowser-modal-title">バウザー召喚</div>
+			<div class="bowser-modal-message">
+				本当にバウザーを召喚しますか？<br />
+				この力はメンバー1人につき1回だけ使えます。
+			</div>
+
+			<div class="bowser-modal-actions">
+				<button id="cancelBowserCall" type="button" class="bowser-cancel-button">
+					やめる
+				</button>
+				<button id="confirmBowserCall" type="button" class="bowser-confirm-button">
+					🐷 召喚する
+				</button>
 			</div>
 		</div>
 	</div>
